@@ -39,6 +39,7 @@ public struct Entity
     public EntityType entityType;
     public Vector2 drawSize;
     public Vector2 velocity;
+    public float rotationRate;
     public int sortingOrder;
     public bool cleanupIfNotVisible;
     public bool cleanup;

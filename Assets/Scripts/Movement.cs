@@ -9,12 +9,19 @@ public static class Movement
         // Update positions
         for(int i = 0; i < context.entities.Count; i++)
         {
-            if( context.entities[i].velocity == Vector2.zero )
-                continue;
+            if( context.entities[i].velocity != Vector2.zero )
+            {
+                Entity entity = context.entities[i];
+                entity.position += entity.velocity;
+                context.entities[i] = entity;
+            }
             
-            Entity entity = context.entities[i];
-            entity.position += entity.velocity;
-            context.entities[i] = entity;
+            if( context.entities[i].rotationRate != 0f )
+            {
+                Entity entity = context.entities[i];
+                entity.rotation += entity.rotationRate;
+                context.entities[i] = entity;
+            }
         }
     }
 }

@@ -6,17 +6,6 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-
-
-public enum EntityType
-{
-    TILE,
-    ENGINE,
-    BACKDROP_PARTICLE,
-    ASTEROID_SMALL,
-    ASTEROID_LARGE
-}
-
 [Flags]
 public enum Cardinal
 {
@@ -30,19 +19,6 @@ public enum Cardinal
 public enum InputType
 {
     MOVE_PLAYER
-}
-
-public struct Entity
-{
-    public Vector2 position;
-    public float rotation;
-    public EntityType entityType;
-    public Vector2 drawSize;
-    public Vector2 velocity;
-    public float rotationRate;
-    public int sortingOrder;
-    public bool cleanupIfNotVisible;
-    public bool cleanup;
 }
 
 public struct InputEvent
@@ -80,7 +56,7 @@ public class Game : MonoBehaviour
 
     void Start()
     {
-        entities.AddRange(ShipMaker.MakeShip(6, 10));
+        entities.AddRange(EntityMaker.MakeShip(6, 10));
     }
 
     void Update()
@@ -99,6 +75,10 @@ public class Game : MonoBehaviour
 
         // Render / presentation (per-frame)
         DrawEntities();
+
+        var context = new Context(entities, Camera.main.GetWorldRect());
+
+        Collisions.Update(context);
     }
 
     private readonly StringBuilder sb = new(1024);
@@ -118,8 +98,10 @@ public class Game : MonoBehaviour
         ConsumeInput();
 
         var context = new Context(entities, Camera.main.GetWorldRect());
-
+        
+        Damage.Tick(context);
         Movement.Tick(context);
+        Collisions.Tick(context);
         Asteroids.Tick(context);
         BackgroupEffects.Tick(context);
     }

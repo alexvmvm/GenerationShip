@@ -26,27 +26,32 @@ public static class Render
 
         var matrix = Matrix4x4.TRS(worldPos, rot, scale);
 
+        if( e.damageFlashTicks > 0 )
+        {
+            var x = 5;
+        }
+
+        Color tint = (e.damageFlashTicks > 0) ? Color.red : Color.white;
+
         mpb.Clear();
         mpb.SetTexture("_MainTex", sprite.texture);
-        mpb.SetColor("_Color", Color.white);
+        mpb.SetColor("_Color", tint);
 
         // Extra safety for some SRP shaders:
         mpb.SetTexture("_BaseMap", sprite.texture);
-        mpb.SetColor("_BaseColor", Color.white);
+        mpb.SetColor("_BaseColor", tint);
 
         Graphics.DrawMesh(mesh, matrix, spriteMaterial, 0, null, 0, mpb);
-
-        DebugUtils.DrawRect(e.position, Vector2.one, Color.red);
     }
 
     private static Sprite GetSprite(EntityType type) => type switch
     {
-        EntityType.TILE                 => ResourceCache.Sprite("Textures/floor"),
-        EntityType.ENGINE               => ResourceCache.Sprite("Textures/engine"),
+        EntityType.SHIP_FLOOR           => ResourceCache.Sprite("Textures/floor"),
+        EntityType.SHIP_ENGINE          => ResourceCache.Sprite("Textures/engine"),
         EntityType.BACKDROP_PARTICLE    => ResourceCache.Sprite("Textures/particle"),
         EntityType.ASTEROID_SMALL       => ResourceCache.Sprite("Textures/asteroid-small"),
         EntityType.ASTEROID_LARGE       => ResourceCache.Sprite("Textures/asteroid-large"),
-        _                               => ResourceCache.Sprite("Textures/placeholder")
+        _                               => null
     }; 
 
     private static readonly Dictionary<Sprite, Mesh> spriteMeshCache = new();
@@ -67,10 +72,15 @@ public static class Render
         for (int i = 0; i < tris16.Length; i++)
             tris[i] = tris16[i];
 
+        var colors = new Color32[verts3.Length];
+        for (int i = 0; i < colors.Length; i++)
+            colors[i] = new Color32(255, 255, 255, 255);
+
         var mesh = new Mesh { name = $"SpriteMesh_{sprite.name}" };
         mesh.SetVertices(verts3);
         mesh.SetUVs(0, uvs);
         mesh.SetTriangles(tris, 0);
+        mesh.SetColors(colors);
         mesh.RecalculateBounds();
 
         spriteMeshCache[sprite] = mesh;

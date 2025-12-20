@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -70,19 +71,43 @@ public static class Collisions
         if (aIsShip && bIsAsteroid)
         {
             b.cleanup = true;
+            DoAsteroidDestruction(b, context);
             DoRoomHit(ref a, context);
         }
         else if (bIsShip && aIsAsteroid)
         {
             a.cleanup = true;
+            DoAsteroidDestruction(a, context);
             DoRoomHit(ref b, context);
         }
             
     }
 
+    private static void DoAsteroidDestruction(in Entity asteroid, Context context)
+    {
+        bool large = asteroid.entityType == EntityType.ASTEROID_LARGE;
+        int count = large ? Rand.Range(6, 10) : Rand.Range(2, 5);
+
+        for(int i = 0; i < count; i++)
+        {
+            bool largeFragment = large && Rand.Chance(0.5f);
+
+            Entity fragment = EntityMaker.MakeAsteroidFragment(large: largeFragment);
+            fragment.velocity = asteroid.velocity.Rotate(Rand.Range(-30, 30f)) * Rand.Range(0.5f, 1f);
+            fragment.rotationRate = Rand.Range(0.5f, 2f);
+            fragment.position = asteroid.position + new Vector2(
+                Rand.Range(-0.5f, 0.5f), 
+                Rand.Range(-0.5f, 0.5f));
+
+            context.entities.Add(fragment);
+        }
+    }
+
     private static void DoRoomHit(ref Entity room, Context context)
     {
         room.damageFlashTicks = 5;
+        room.hitPoints -= 10;
+        room.hitPoints = Math.Max(0, room.hitPoints);
 
         for(int i = 0; i < context.entities.Count; i++)
         {

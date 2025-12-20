@@ -18,6 +18,18 @@ public static class EntityMaker
         };
     }
 
+    public static Entity MakeAsteroidFragment(bool large)
+    {
+        return new Entity()
+        {
+            id = -1,
+            entityType = large ? EntityType.ASTEROID_FRAGMENT_LARGE : EntityType.ASTEROID_FRAGMENT_SMALL,
+            drawSize = Vector2.one,
+            cleanupIfNotVisible = true,
+            sortingOrder = 2
+        };
+    }
+
     public static Entity MakeBackgroundParticle()
     {
         return new Entity()
@@ -45,6 +57,7 @@ public static class EntityMaker
         room.collisionSize = new Vector2(width, height);
         room.collisionLayer = CollisionLayer.Ship;
         room.collideWithMask = CollisionLayer.Asteroid;
+        room.hitPoints = DamageTuning.RoomHitpoints;
 
         entities.Add(ship);
         entities.Add(room);

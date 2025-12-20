@@ -88,6 +88,10 @@ public class Game : MonoBehaviour
         sb.AppendLine($"Entities: {entities.Count}");
 
         GUI.Label(new Rect(10, 10, 600, 400), sb.ToString());
+
+        var context = new Context(entities, Camera.main.GetWorldRect());
+
+        GameUI.OnGUI(context);
     }
 
 

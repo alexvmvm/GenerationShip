@@ -9,7 +9,9 @@ public enum EntityType
     SHIP_ROOM,
     BACKDROP_PARTICLE,
     ASTEROID_SMALL,
-    ASTEROID_LARGE
+    ASTEROID_LARGE,
+    ASTEROID_FRAGMENT_SMALL,
+    ASTEROID_FRAGMENT_LARGE
 }
 
 [Flags]
@@ -43,10 +45,11 @@ public struct Entity
     public Vector2 drawSize;
     public int sortingOrder;
 
-    // life
-    public bool cleanupIfNotVisible;
-    public bool cleanup;
-
     // misc
     public int damageFlashTicks; 
+    public int hitPoints;
+
+    // cleanup
+    public bool cleanupIfNotVisible;
+    public bool cleanup;
 }

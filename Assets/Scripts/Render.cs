@@ -46,12 +46,14 @@ public static class Render
 
     private static Sprite GetSprite(EntityType type) => type switch
     {
-        EntityType.SHIP_FLOOR           => ResourceCache.Sprite("Textures/floor"),
-        EntityType.SHIP_ENGINE          => ResourceCache.Sprite("Textures/engine"),
-        EntityType.BACKDROP_PARTICLE    => ResourceCache.Sprite("Textures/particle"),
-        EntityType.ASTEROID_SMALL       => ResourceCache.Sprite("Textures/asteroid-small"),
-        EntityType.ASTEROID_LARGE       => ResourceCache.Sprite("Textures/asteroid-large"),
-        _                               => null
+        EntityType.SHIP_FLOOR               => ResourceCache.Sprite("Textures/floor"),
+        EntityType.SHIP_ENGINE              => ResourceCache.Sprite("Textures/engine"),
+        EntityType.BACKDROP_PARTICLE        => ResourceCache.Sprite("Textures/particle"),
+        EntityType.ASTEROID_SMALL           => ResourceCache.Sprite("Textures/asteroid-small"),
+        EntityType.ASTEROID_LARGE           => ResourceCache.Sprite("Textures/asteroid-large"),
+        EntityType.ASTEROID_FRAGMENT_SMALL  => ResourceCache.Sprite("Textures/asteroid-fragment-small"),
+        EntityType.ASTEROID_FRAGMENT_LARGE  => ResourceCache.Sprite("Textures/asteroid-fragment-large"),
+        _                                   => null
     }; 
 
     private static readonly Dictionary<Sprite, Mesh> spriteMeshCache = new();

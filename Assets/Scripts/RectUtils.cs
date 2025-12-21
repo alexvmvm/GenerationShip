@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public static class RectUtils
 {
@@ -203,4 +202,45 @@ public static class RectUtils
 
     public static bool IsZero(this RectInt rect) 
         => rect.size == Vector2Int.zero;
+
+    public static int AdjacentCellCount(this Rect a, Rect b, float eps = 0.0001f)
+    {
+        // If they overlap with positive area, they are NOT adjacent.
+        // (Touching edges/corners is allowed and should NOT count as overlap.)
+        float overlapW = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin);
+        float overlapH = Mathf.Min(a.yMax, b.yMax) - Mathf.Max(a.yMin, b.yMin);
+        if (overlapW > eps && overlapH > eps)
+            return 0;
+
+        // Helper: overlap length along one axis, expressed as "cell count".
+        static int OverlapCells(float aMin, float aMax, float bMin, float bMax, float eps)
+        {
+            float min = Mathf.Max(aMin, bMin);
+            float max = Mathf.Min(aMax, bMax);
+            float len = max - min;
+            if (len <= eps) return 0;
+            return Mathf.RoundToInt(len); // cell-aligned => integer length
+        }
+
+        int count = 0;
+
+        // Side adjacency (vertical): a's top touches b's bottom OR b's top touches a's bottom
+        bool touchVertical =
+            Mathf.Abs(a.yMax - b.yMin) <= eps ||
+            Mathf.Abs(b.yMax - a.yMin) <= eps;
+
+        if (touchVertical)
+            count += OverlapCells(a.xMin, a.xMax, b.xMin, b.xMax, eps);
+
+        // Side adjacency (horizontal): a's right touches b's left OR b's right touches a's left
+        bool touchHorizontal =
+            Mathf.Abs(a.xMax - b.xMin) <= eps ||
+            Mathf.Abs(b.xMax - a.xMin) <= eps;
+
+        if (touchHorizontal)
+            count += OverlapCells(a.yMin, a.yMax, b.yMin, b.yMax, eps);
+
+        // Corner-touch only => both overlaps return 0, so count stays 0.
+        return count;
+    }
 }

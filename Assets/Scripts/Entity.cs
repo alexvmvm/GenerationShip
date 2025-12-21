@@ -14,6 +14,19 @@ public enum EntityType
     ASTEROID_FRAGMENT_LARGE
 }
 
+[System.Flags]
+public enum EntityTag : uint
+{
+    None        = 0,
+    Room        = 1 << 3
+}
+
+public static class EntityTagUtils
+{
+    public static bool HasAny(this EntityTag value, EntityTag mask) => (value & mask) != 0;
+    public static bool HasAll(this EntityTag value, EntityTag mask) => (value & mask) == mask;
+}
+
 [Flags]
 public enum CollisionLayer : uint
 {
@@ -29,6 +42,7 @@ public struct Entity
     public int id;
     public int parentId;
     public EntityType entityType;
+    public EntityTag tags;
     
     // position
     public Vector2 position;
@@ -48,6 +62,7 @@ public struct Entity
     // misc
     public int damageFlashTicks; 
     public int hitPoints;
+    public Rect roomBounds;
 
     // cleanup
     public bool cleanupIfNotVisible;

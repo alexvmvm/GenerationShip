@@ -58,6 +58,8 @@ public static class EntityMaker
         room.collisionLayer = CollisionLayer.Ship;
         room.collideWithMask = CollisionLayer.Asteroid;
         room.hitPoints = DamageTuning.RoomHitpoints;
+        room.tags = EntityTag.Room;
+        room.roomBounds = new Rect(0, 0, width, height);
 
         entities.Add(ship);
         entities.Add(room);

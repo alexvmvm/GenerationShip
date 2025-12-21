@@ -50,13 +50,17 @@ public class Game : MonoBehaviour
     private readonly Queue<InputEvent> events = new();
     private float tickAcc;
     private static int ticksGame;
+    private int shipId;
 
     //Props
     public static int TicksGame => ticksGame;
+    private Context GameContext => new(entities, Camera.main.GetWorldRect());
 
     void Start()
     {
-        entities.AddRange(EntityMaker.MakeShip(6, 10));
+        var ship = EntityMaker.MakeShip(6, 10);
+        shipId = ship[0].id;
+        entities.AddRange(ship);
     }
 
     void Update()
@@ -76,9 +80,7 @@ public class Game : MonoBehaviour
         // Render / presentation (per-frame)
         DrawEntities();
 
-        var context = new Context(entities, Camera.main.GetWorldRect());
-
-        Collisions.Update(context);
+        Collisions.Update(GameContext);
     }
 
     private readonly StringBuilder sb = new(1024);
@@ -89,9 +91,15 @@ public class Game : MonoBehaviour
 
         GUI.Label(new Rect(10, 10, 600, 400), sb.ToString());
 
-        var context = new Context(entities, Camera.main.GetWorldRect());
+        GameUI.OnGUI(GameContext);
 
-        GameUI.OnGUI(context);
+        const int BtnWidth = 120;
+        const int BtnHeight = 40;
+
+        if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - BtnHeight - 10, BtnWidth, BtnHeight), "Add shield") )
+        {
+            ShipUtils.AddShieldRoom(shipId, GameContext);
+        }
     }
 
 
@@ -101,7 +109,7 @@ public class Game : MonoBehaviour
         CleanupEntities();
         ConsumeInput();
 
-        var context = new Context(entities, Camera.main.GetWorldRect());
+        var context = GameContext;
         
         Damage.Tick(context);
         Movement.Tick(context);

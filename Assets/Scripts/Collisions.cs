@@ -112,12 +112,38 @@ public static class Collisions
         for(int i = 0; i < context.entities.Count; i++)
         {
             if( context.entities[i].parentId == room.id && 
-                (context.entities[i].entityType == EntityType.SHIP_FLOOR || 
-                 context.entities[i].entityType == EntityType.SHIP_ENGINE) )
+                context.entities[i].tags.HasAny(EntityTag.Floor | EntityTag.Wall | EntityTag.Engine) )
             {
                 Entity floor = context.entities[i];
                 floor.damageFlashTicks = 6;
                 context.entities[i] = floor;
+            }
+        }
+
+        if( room.hitPoints <= 0 )
+        {
+            room.collideWithMask = CollisionLayer.None;
+            room.collisionLayer = CollisionLayer.None;
+            room.collisionSize = default;
+
+            for(int i = 0; i < context.entities.Count; i++)
+            {
+                if( context.entities[i].parentId != room.id )
+                    continue;
+
+                Entity e = context.entities[i];
+                e.cleanupIfNotVisible = true;
+                if( Rand.Chance(0.1f) )
+                {
+                    e.velocity = new Vector2(0, -0.05f).Rotate(Rand.Range(-15, 15));
+                    e.rotationRate = Rand.Bool ? 1 : 0;
+                }
+                else
+                {
+                    e.velocity = new Vector2(0, -0.05f).Rotate(Rand.Range(-1, 1));
+                }
+                
+                context.entities[i] = e;
             }
         }
     }

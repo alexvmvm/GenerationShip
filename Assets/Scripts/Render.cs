@@ -47,6 +47,7 @@ public static class Render
     private static Sprite GetSprite(EntityType type) => type switch
     {
         EntityType.SHIP_FLOOR               => ResourceCache.Sprite("Textures/floor"),
+        EntityType.SHIP_WALL                => ResourceCache.Sprite("Textures/wall"),
         EntityType.SHIP_ENGINE              => ResourceCache.Sprite("Textures/engine"),
         EntityType.BACKDROP_PARTICLE        => ResourceCache.Sprite("Textures/particle"),
         EntityType.ASTEROID_SMALL           => ResourceCache.Sprite("Textures/asteroid-small"),

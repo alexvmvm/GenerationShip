@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,11 +28,13 @@ public static class ShipUtils
     {
         var rooms = GetShipRooms(shipId, context.entities);
 
-        const int RoomWidth = 4;
-        const int RoomHeight = 4;
+        int roomWidth = Rand.Range(6, 10);
+        int roomHeight = Rand.Range(6, 10);
 
         float bestScore = 0f;
         Rect  bestRect = default;
+
+        var rects = new List<Rect>();
 
         for(int i = 0; i < rooms.Count; i++)
         {
@@ -39,24 +42,28 @@ public static class ShipUtils
 
             for(int x = Mathf.FloorToInt(roomRect.xMin); x < roomRect.xMax; x++)
             {
-                var above = new Rect(x, Mathf.FloorToInt(roomRect.yMin) - RoomHeight, RoomWidth, RoomHeight);
-                var aboveScore = RoomPositionScore(above, rooms);
-                if( aboveScore > 0f && aboveScore > bestScore )
-                {
-                    bestRect = above;
-                    bestScore = aboveScore;
-                }
-                
-                var below = new Rect(x, Mathf.FloorToInt(roomRect.yMax), RoomWidth, RoomHeight);
-                var belowScore = RoomPositionScore(below, rooms);
-                if( belowScore > 0 && belowScore > bestScore )
-                {
-                    bestRect = below;
-                    bestScore = belowScore;
-                }
+                rects.Add(new Rect(x, Mathf.FloorToInt(roomRect.yMin) - roomHeight, roomWidth, roomHeight));
+                rects.Add(new Rect(x, Mathf.FloorToInt(roomRect.yMax), roomWidth, roomHeight));
+            }
+
+            for(int y = Mathf.FloorToInt(roomRect.yMin); y < roomRect.yMax; y++)
+            {
+                rects.Add(new Rect(Mathf.FloorToInt(roomRect.xMin) - roomWidth, y, roomWidth, roomHeight));
+                rects.Add(new Rect(Mathf.FloorToInt(roomRect.xMax), y, roomWidth, roomHeight));
             }
         }
 
+        foreach(Rect rect in rects.InRandomOrder())
+        {
+            var score = RoomPositionScore(rect, rooms);
+            if( score > 0 && score > bestScore )
+            {
+                bestRect = rect;
+                bestScore = score;
+            }
+        }
+
+        // if we can't place a room something went wrong
         Debug.Assert(!bestRect.Equals(default));
 
         var room = new Entity();
@@ -75,12 +82,15 @@ public static class ShipUtils
         {
             for(int y = 0; y < bestRect.height; y++)
             {
+                bool wall = x == 0 || x == bestRect.width - 1 || y == 0 || y == bestRect.height -1;
+
                 Entity entity = new()
                 {
-                    entityType = EntityType.SHIP_FLOOR,
+                    entityType = wall ? EntityType.SHIP_WALL : EntityType.SHIP_FLOOR,
                     drawSize = Vector2.one,
                     position = new(bestRect.x + x + 0.5f, bestRect.y + y + 0.5f),
-                    parentId = room.id  
+                    parentId = room.id,
+                    tags = wall ? EntityTag.Wall : EntityTag.Floor  
                 };
 
                 context.entities.Add(entity);
@@ -94,15 +104,44 @@ public static class ShipUtils
     {
         Debug.Assert(!rect.Equals(default));
 
+        const float ALIGN_BONUS = 2f;   // how much you reward perfect alignment
+        const float ALIGN_MAX = 6f;     // diff at which bonus becomes 0
+        const float CLOSENESS_WEIGHT = 10f; // weight it relative to your other terms
+
         float score = 0f;
 
         // Cannot use if we overlap another room
         for(int i = 0; i < rooms.Count; i++)
         {
-            if( rooms[i].roomBounds.Overlaps(rect) )
+            Rect otherRect = rooms[i].roomBounds;
+            if( otherRect.Overlaps(rect) )
                 return 0f;
 
-            score += RectUtils.AdjacentCellCount(rect, rooms[i].roomBounds);
+            score += RectUtils.AdjacentCellCount(rect, otherRect);
+
+            // alignent score
+            {
+                float xDiff = Mathf.Abs(rect.center.x - otherRect.center.x);
+                float yDiff = Mathf.Abs(rect.center.y - otherRect.center.y);
+
+                float xAlign = Mathf.Clamp01(1f - (xDiff / ALIGN_MAX)); // 1 at 0, 0 at ALIGN_MAX+
+                float yAlign = Mathf.Clamp01(1f - (yDiff / ALIGN_MAX));
+
+                score += ALIGN_BONUS * (xAlign + yAlign);
+            }
+
+            // distance score
+            {
+                float sumDist = 0f;
+                for(int j = 0; j < rooms.Count; j++)
+                {   
+                    sumDist += Vector2.Distance(rooms[i].roomBounds.center, rect.center);
+                }
+
+                float distanceScore = 1f / (1f + sumDist);
+                score += distanceScore * CLOSENESS_WEIGHT;
+            }
+            
         }
 
         return score;

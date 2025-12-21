@@ -68,12 +68,14 @@ public static class EntityMaker
         {
             for(int y = 0; y < height; y++)
             {
+                bool wall = x == 0 || x == width - 1 || y == 0 || y == height -1;
                 Entity entity = new()
                 {
-                    entityType = EntityType.SHIP_FLOOR,
+                    entityType = wall ? EntityType.SHIP_WALL : EntityType.SHIP_FLOOR,
                     drawSize = Vector2.one,
                     position = new(x + 0.5f, y + 0.5f),
-                    parentId = room.id  
+                    parentId = room.id,
+                    tags = wall ? EntityTag.Wall : EntityTag.Floor  
                 };
 
                 entities.Add(entity);
@@ -86,7 +88,8 @@ public static class EntityMaker
            drawSize = Vector2.one,
            position = new(1.5f, 0.5f),
            sortingOrder = 1,
-           parentId = room.id
+           parentId = room.id,
+           tags = EntityTag.Engine
         });
 
         entities.Add(new Entity()
@@ -95,7 +98,8 @@ public static class EntityMaker
            drawSize = Vector2.one,
            position = new(width - 1.5f, 0.5f),
            sortingOrder = 1,
-           parentId = room.id
+           parentId = room.id,
+           tags = EntityTag.Engine
         });
 
         return entities;

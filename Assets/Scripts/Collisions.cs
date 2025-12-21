@@ -133,6 +133,8 @@ public static class Collisions
 
                 Entity e = context.entities[i];
                 e.cleanupIfNotVisible = true;
+                e.sortingOrder -= 10;
+
                 if( Rand.Chance(0.1f) )
                 {
                     e.velocity = new Vector2(0, -0.05f).Rotate(Rand.Range(-15, 15));

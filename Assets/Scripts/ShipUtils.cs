@@ -73,6 +73,7 @@ public static class ShipUtils
         Debug.Assert(!roomRect.Equals(default));
 
         CreateRoom(shipId, roomId, roomRect, context);
+        CreateWalls(shipId, context);
     }
 
     private static void CreateRoom(int shipId, int roomId, Rect roomRect, Context context)
@@ -93,8 +94,6 @@ public static class ShipUtils
 
         context.entities.Add(room);
 
-        var floors = new List<int>();
-
         // place the floors
         for (int x = 0; x < roomRect.width; x++)
         {
@@ -111,11 +110,13 @@ public static class ShipUtils
                     tags = EntityTag.Floor  
                 };
                 
-                floors.Add(context.entities.Count);
                 context.entities.Add(entity);
             }
         }
+    }
 
+    private static void CreateWalls(int shipId, Context context)
+    {
         var ship = GetShipData(shipId, in context.entities);
 
         bool ShouldPlaceWall(Vector2 position)
@@ -131,14 +132,20 @@ public static class ShipUtils
 
         // place walls
         {
-            for(int i = 0; i < floors.Count; i++)
+            for(int i = 0; i < context.entities.Count; i++)
             {
-                if( ShouldPlaceWall(context.entities[floors[i]].position) )
+                if( context.entities[i].entityType != EntityType.SHIP_FLOOR )
+                    continue;
+                
+                if( !ship.roomIds.Contains(context.entities[i].parentId) )
+                    continue;
+
+                if( ShouldPlaceWall(context.entities[i].position) )
                 {
-                    Entity floor = context.entities[floors[i]];
+                    Entity floor = context.entities[i];
                     floor.entityType = EntityType.SHIP_WALL;
                     floor.tags = EntityTag.Floor;
-                    context.entities[floors[i]] = floor;
+                    context.entities[i] = floor;
                 } 
             }
         }

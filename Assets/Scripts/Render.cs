@@ -26,11 +26,6 @@ public static class Render
 
         var matrix = Matrix4x4.TRS(worldPos, rot, scale);
 
-        if( e.damageFlashTicks > 0 )
-        {
-            var x = 5;
-        }
-
         Color tint = (e.damageFlashTicks > 0) ? Color.red : Color.white;
 
         mpb.Clear();

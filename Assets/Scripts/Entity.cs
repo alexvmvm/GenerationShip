@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum EntityType
@@ -67,6 +68,7 @@ public struct Entity
     public int damageFlashTicks; 
     public int hitPoints;
     public Rect roomBounds;
+    public List<int> connectedRooms;
 
     // cleanup
     public bool cleanupIfNotVisible;

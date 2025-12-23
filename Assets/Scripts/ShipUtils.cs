@@ -9,23 +9,12 @@ public struct ShipData
     public List<Rect> roomRects;
     public List<Entity> rooms;
     public Dictionary<Vector2Int, Entity> structureByPosition;
+    public Vector2 centroid;
 }
 
 public static class ShipUtils
 {
-    private static readonly Vector2[] AdjacentDirections = new Vector2[8]
-    {
-        Vector2.up,
-        Vector2.down,
-        Vector2.left,
-        Vector2.right,
-        Vector2.up + Vector2.left,
-        Vector2.up + Vector2.right,
-        Vector2.down + Vector2.left,
-        Vector2.down + Vector2.right
-    };
-
-    private static ShipData GetShipData(int shipId, in List<Entity> entities)
+    public static ShipData GetShipData(int shipId, in List<Entity> entities)
     {
         var ship = new ShipData();
         ship.roomIds = new();
@@ -39,8 +28,10 @@ public static class ShipUtils
             {
                 if( entities[i].tags.HasAny(EntityTag.Room) )
                 {
+                    Rect roomRect = entities[i].roomBounds;
+                    
                     ship.roomIds.Add(entities[i].id);
-                    ship.roomRects.Add(entities[i].roomBounds);
+                    ship.roomRects.Add(roomRect);
                     ship.rooms.Add(entities[i]);
                 }
             }
@@ -64,31 +55,37 @@ public static class ShipUtils
 
     public static void AddShieldRoom(int shipId, in Context context)
     {
-        int width  = Rand.Range(6, 10);
-        int height = Rand.Range(6, 10);
-
-        Rect roomRect = GetBestRoomRect(shipId, width, height, context, out int roomId);
+        Rect roomRect = GetBestRoomRect(shipId, 6, 6, context);
 
         // if we can't place a room something went wrong
         Debug.Assert(!roomRect.Equals(default));
 
-        CreateRoom(shipId, roomId, roomRect, context);
-        CreateWalls(shipId, context);
+        Entity room = CreateRoom(shipId, roomRect, context, EntityTag.Shield);
+
+        context.entities.Add(new Entity()
+        {
+           entityType = EntityType.SHIP_SHIELD,
+           drawSize = Vector2.one,
+           position = roomRect.center,
+           sortingOrder = 1,
+           parentId = room.id,
+           tags = EntityTag.Shield
+        });
     }
 
-    private static void CreateRoom(int shipId, int roomId, Rect roomRect, Context context)
+    public static Entity CreateRoom(int shipId, Rect roomRect, Context context, EntityTag tags)
     {
         var room = new Entity
         {
             entityType = EntityType.SHIP_ROOM,
-            id = roomId,
+            id = Rand.IntPositive,
             parentId = shipId,
             position = roomRect.position + new Vector2(roomRect.width / 2f, roomRect.height / 2f),
             collisionSize = new Vector2(roomRect.width, roomRect.height),
             collisionLayer = CollisionLayer.Ship,
             collideWithMask = CollisionLayer.Asteroid,
             hitPoints = DamageTuning.RoomHitpoints,
-            tags = EntityTag.Room,
+            tags = EntityTag.Room | tags,
             roomBounds = roomRect
         };
 
@@ -101,57 +98,39 @@ public static class ShipUtils
             {
                 Vector2 position = new(roomRect.x + x + 0.5f, roomRect.y + y + 0.5f);
 
-                Entity entity = new()
+                Entity entity;
+
+                if( x == 0 || y == 0 || x == roomRect.width - 1 || y == roomRect.height - 1)
                 {
-                    entityType = EntityType.SHIP_FLOOR,
-                    drawSize = Vector2.one,
-                    position = position,
-                    parentId = room.id,
-                    tags = EntityTag.Floor  
-                };
+                    entity = new()
+                    {
+                        entityType = EntityType.SHIP_WALL,
+                        drawSize = Vector2.one,
+                        position = position,
+                        parentId = room.id,
+                        tags = EntityTag.Wall  
+                    };
+                }
+                else
+                {
+                    entity = new()
+                    {
+                        entityType = EntityType.SHIP_FLOOR,
+                        drawSize = Vector2.one,
+                        position = position,
+                        parentId = room.id,
+                        tags = EntityTag.Floor  
+                    };
+                }
                 
                 context.entities.Add(entity);
             }
         }
+
+        return room;
     }
 
-    private static void CreateWalls(int shipId, Context context)
-    {
-        var ship = GetShipData(shipId, in context.entities);
-
-        bool ShouldPlaceWall(Vector2 position)
-        {
-            for(int i = 0; i < AdjacentDirections.Length; i++)
-            {
-                if( !ship.structureByPosition.TryGetValue((position + AdjacentDirections[i]).ToVector2IntFloor(), out Entity entity) )
-                    return true;
-            }
-
-            return false;
-        }
-
-        // place walls
-        {
-            for(int i = 0; i < context.entities.Count; i++)
-            {
-                if( context.entities[i].entityType != EntityType.SHIP_FLOOR )
-                    continue;
-                
-                if( !ship.roomIds.Contains(context.entities[i].parentId) )
-                    continue;
-
-                if( ShouldPlaceWall(context.entities[i].position) )
-                {
-                    Entity floor = context.entities[i];
-                    floor.entityType = EntityType.SHIP_WALL;
-                    floor.tags = EntityTag.Floor;
-                    context.entities[i] = floor;
-                } 
-            }
-        }
-    }
-
-    private static Rect GetBestRoomRect(int shipId, int width, int height, Context context, out int roomId)
+    private static Rect GetBestRoomRect(int shipId, int width, int height, Context context)
     {
         float bestScore = 0f;
         Rect  bestRect = default;
@@ -179,7 +158,7 @@ public static class ShipUtils
                 rect = new Rect(x, y, width, height);
             }
 
-            var score = RoomPositionScore(rect, ship.roomRects);
+            var score = RoomPositionScore(rect, ship);
             if( score > 0 && score > bestScore )
             {
                 bestRect = rect;
@@ -187,12 +166,10 @@ public static class ShipUtils
             }
         }
 
-        roomId = ship.roomRects.Count;
-
         return bestRect;
     }
 
-    private static float RoomPositionScore(Rect rect, in List<Rect> rooms)
+    private static float RoomPositionScore(Rect rect, ShipData shipData)
     {
         Debug.Assert(!rect.Equals(default));
 
@@ -201,6 +178,8 @@ public static class ShipUtils
         const float CLOSENESS_WEIGHT = 10f; // weight it relative to your other terms
 
         float score = 0f;
+        
+        var rooms = shipData.roomRects;
 
         // Cannot use if we overlap another room
         for(int i = 0; i < rooms.Count; i++)
@@ -222,15 +201,16 @@ public static class ShipUtils
                 score += ALIGN_BONUS * (xAlign + yAlign);
             }
 
+            var centroid = Vector2.zero;
+            for(int j = 0; j < rooms.Count; j++)
+            {
+                centroid += rooms[i].center;
+            }
+            centroid /= rooms.Count;
+
             // distance score
             {
-                float sumDist = 0f;
-                for(int j = 0; j < rooms.Count; j++)
-                {   
-                    sumDist += Vector2.Distance(rooms[i].center, rect.center);
-                }
-
-                float distanceScore = 1f / (1f + sumDist);
+                float distanceScore = 1f / (1f + Vector2.Distance(centroid, rect.center));
                 score += distanceScore * CLOSENESS_WEIGHT;
             }
             

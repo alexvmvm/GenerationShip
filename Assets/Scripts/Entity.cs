@@ -8,6 +8,7 @@ public enum EntityType
     SHIP_FLOOR,
     SHIP_WALL,
     SHIP_ENGINE,
+    SHIP_SHIELD,
     SHIP_ROOM,
     BACKDROP_PARTICLE,
     ASTEROID_SMALL,
@@ -23,7 +24,8 @@ public enum EntityTag : uint
     Room        = 1 << 2,
     Floor       = 1 << 3,
     Wall        = 1 << 4,
-    Engine      = 1 << 5
+    Engine      = 1 << 5,
+    Shield      = 1 << 6
 }
 
 public static class EntityTagUtils

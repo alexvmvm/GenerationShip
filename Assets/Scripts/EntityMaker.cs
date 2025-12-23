@@ -41,67 +41,38 @@ public static class EntityMaker
         };
     }
 
-    public static List<Entity> MakeShip(int width, int height)
+    public static Entity MakeShip(int width, int height, Context context)
     {
-        var entities = new List<Entity>();
-        
         var ship = new Entity();
         ship.entityType = EntityType.SHIP;
-        ship.id = 0;
+        ship.id = Rand.IntPositive;
 
-        var room = new Entity();
-        room.entityType = EntityType.SHIP_ROOM;
-        room.id = 1;
-        room.parentId = ship.id;
-        room.position = new Vector2(width/2f, height/2f);
-        room.collisionSize = new Vector2(width, height);
-        room.collisionLayer = CollisionLayer.Ship;
-        room.collideWithMask = CollisionLayer.Asteroid;
-        room.hitPoints = DamageTuning.RoomHitpoints;
-        room.tags = EntityTag.Room;
-        room.roomBounds = new Rect(0, 0, width, height);
+        context.entities.Add(ship);
 
-        entities.Add(ship);
-        entities.Add(room);
+        Rect rect = new Rect(-width/2f, -height/2f, width, height);
 
-        for(int x = 0; x < width; x++)
-        {
-            for(int y = 0; y < height; y++)
-            {
-                bool wall = x == 0 || x == width - 1 || y == 0 || y == height -1;
-                Entity entity = new()
-                {
-                    entityType = wall ? EntityType.SHIP_WALL : EntityType.SHIP_FLOOR,
-                    drawSize = Vector2.one,
-                    position = new(x + 0.5f, y + 0.5f),
-                    parentId = room.id,
-                    tags = wall ? EntityTag.Wall : EntityTag.Floor  
-                };
+        Entity room = ShipUtils.CreateRoom(ship.id, rect, context, EntityTag.Engine);
 
-                entities.Add(entity);
-            }
-        }
-
-        entities.Add(new Entity()
+        context.entities.Add(new Entity()
         {
            entityType = EntityType.SHIP_ENGINE,
            drawSize = Vector2.one,
-           position = new(1.5f, 0.5f),
+           position = new(rect.xMin + 1.5f, rect.yMin + 0.5f),
            sortingOrder = 1,
            parentId = room.id,
            tags = EntityTag.Engine
         });
 
-        entities.Add(new Entity()
+        context.entities.Add(new Entity()
         {
            entityType = EntityType.SHIP_ENGINE,
            drawSize = Vector2.one,
-           position = new(width - 1.5f, 0.5f),
+           position = new(rect.xMax - 1.5f, rect.yMin + 0.5f),
            sortingOrder = 1,
            parentId = room.id,
            tags = EntityTag.Engine
         });
 
-        return entities;
+        return ship;
     }  
 }

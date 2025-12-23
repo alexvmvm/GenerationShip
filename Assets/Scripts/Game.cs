@@ -58,9 +58,9 @@ public class Game : MonoBehaviour
 
     void Start()
     {
-        var ship = EntityMaker.MakeShip(6, 10);
-        shipId = ship[0].id;
-        entities.AddRange(ship);
+        Entity ship = EntityMaker.MakeShip(6, 10, GameContext);
+
+        shipId = ship.id;
     }
 
     void Update()

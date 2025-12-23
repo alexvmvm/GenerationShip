@@ -125,6 +125,7 @@ public static class Collisions
             room.collideWithMask = CollisionLayer.None;
             room.collisionLayer = CollisionLayer.None;
             room.collisionSize = default;
+            room.cleanup = true;
 
             for(int i = 0; i < context.entities.Count; i++)
             {

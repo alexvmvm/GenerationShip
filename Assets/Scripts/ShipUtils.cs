@@ -2,73 +2,44 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Assertions;
 
-public struct Ship
+public struct ShipAggregate
 {
-    public int shipId;
-    
+    public List<int> roomIds;   
 }
 
 public static class ShipUtils
 {
-    private static readonly List<Entity> rooms = new();
+    private static readonly List<Entity> tmpRooms = new();
     public static List<Entity> GetShipRooms(int shipId, in List<Entity> entities)
     {
         for(int i = 0; i < entities.Count; i++)
         {
             if( entities[i].tags.HasAny(EntityTag.Room) && entities[i].parentId == shipId )
-                rooms.Add(entities[i]);
+                tmpRooms.Add(entities[i]);
         }
 
-        return rooms;
+        return tmpRooms;
     }
 
     public static void AddShieldRoom(int shipId, in Context context)
     {
-        var rooms = GetShipRooms(shipId, context.entities);
+        int width  = Rand.Range(6, 10);
+        int height = Rand.Range(6, 10);
 
-        int roomWidth = Rand.Range(6, 10);
-        int roomHeight = Rand.Range(6, 10);
-
-        float bestScore = 0f;
-        Rect  bestRect = default;
-
-        var rects = new List<Rect>();
-
-        for(int i = 0; i < rooms.Count; i++)
-        {
-            var roomRect = rooms[i].roomBounds;
-
-            for(int x = Mathf.FloorToInt(roomRect.xMin); x < roomRect.xMax; x++)
-            {
-                rects.Add(new Rect(x, Mathf.FloorToInt(roomRect.yMin) - roomHeight, roomWidth, roomHeight));
-                rects.Add(new Rect(x, Mathf.FloorToInt(roomRect.yMax), roomWidth, roomHeight));
-            }
-
-            for(int y = Mathf.FloorToInt(roomRect.yMin); y < roomRect.yMax; y++)
-            {
-                rects.Add(new Rect(Mathf.FloorToInt(roomRect.xMin) - roomWidth, y, roomWidth, roomHeight));
-                rects.Add(new Rect(Mathf.FloorToInt(roomRect.xMax), y, roomWidth, roomHeight));
-            }
-        }
-
-        foreach(Rect rect in rects.InRandomOrder())
-        {
-            var score = RoomPositionScore(rect, rooms);
-            if( score > 0 && score > bestScore )
-            {
-                bestRect = rect;
-                bestScore = score;
-            }
-        }
+        Rect roomRect = GetBestRoomRect(shipId, width, height, context, out int roomId);
 
         // if we can't place a room something went wrong
-        Debug.Assert(!bestRect.Equals(default));
+        Debug.Assert(!roomRect.Equals(default));
 
+        CreateRoom(shipId, roomId, roomRect, context);
+    }
+
+    private static void CreateRoom(int shipId, int roomid, Rect bestRect, Context context)
+    {
         var room = new Entity();
         room.entityType = EntityType.SHIP_ROOM;
-        room.id = rooms.Count;
+        room.id = roomid;
         room.parentId = shipId;
         room.position = bestRect.position + new Vector2(bestRect.width/2f, bestRect.height/2f);
         room.collisionSize = new Vector2(bestRect.width, bestRect.height);
@@ -98,6 +69,48 @@ public static class ShipUtils
         }
 
         context.entities.Add(room);
+    }
+
+    private static Rect GetBestRoomRect(int shipId, int width, int height, Context context, out int roomId)
+    {
+        float bestScore = 0f;
+        Rect  bestRect = default;
+
+        var rooms = GetShipRooms(shipId, context.entities);
+
+        int tries = 200;
+        while( tries-- > 0 )
+        {
+            var room = rooms[Rand.Range(0, rooms.Count)];
+            var roomRect = room.roomBounds;
+            
+            Rect rect;
+            if( Rand.Bool )
+            {
+                int x = Rand.Range(Mathf.FloorToInt(roomRect.xMin), Mathf.FloorToInt(roomRect.xMax));
+                int y = Rand.Bool ? Mathf.FloorToInt(roomRect.yMin) - height : Mathf.FloorToInt(roomRect.yMax);
+
+                rect = new Rect(x, y, width, height);
+            }
+            else
+            {
+                int x = Rand.Bool ? Mathf.FloorToInt(roomRect.xMin) - width : Mathf.FloorToInt(roomRect.xMax);
+                int y = Rand.Range(Mathf.FloorToInt(roomRect.yMin), Mathf.FloorToInt(roomRect.yMax));
+
+                rect = new Rect(x, y, width, height);
+            }
+
+            var score = RoomPositionScore(rect, rooms);
+            if( score > 0 && score > bestScore )
+            {
+                bestRect = rect;
+                bestScore = score;
+            }
+        }
+
+        roomId = rooms.Count;
+
+        return bestRect;
     }
 
     private static float RoomPositionScore(Rect rect, in List<Entity> rooms)

@@ -43,67 +43,85 @@ public static class Collisions
 
     private static bool ShouldCollide(in Entity a, in Entity b)
     {
-        return ((a.collideWithMask & b.collisionLayer) != 0) &&
-            ((b.collideWithMask & a.collisionLayer) != 0);
+        return ((a.collideWithMask & b.collisionLayer) != 0) && ((b.collideWithMask & a.collisionLayer) != 0);
     }
 
     public static bool Collides(in Entity a, in Entity b)
     {
-        Vector2 aHalf = a.collisionSize * 0.5f;
-        Vector2 bHalf = b.collisionSize * 0.5f;
+        // Fast reject: if both are squares, do AABB/AABB
+        if (a.collisionType == CollisionType.SQAURE && b.collisionType == CollisionType.SQAURE)
+            return CollidesAabbAabb(a.position, a.collisionSize, b.position, b.collisionSize);
 
-        // Separating Axis Theorem for AABBs (2D)
-        if (Mathf.Abs(a.position.x - b.position.x) > (aHalf.x + bHalf.x)) return false;
-        if (Mathf.Abs(a.position.y - b.position.y) > (aHalf.y + bHalf.y)) return false;
+        // Circle/Circle
+        if (a.collisionType == CollisionType.CIRCLE && b.collisionType == CollisionType.CIRCLE)
+            return CollidesCircleCircle(a.position, a.collisionRadius, b.position, b.collisionRadius);
 
+        // Circle/AABB (either order)
+        if (a.collisionType == CollisionType.CIRCLE && b.collisionType == CollisionType.SQAURE)
+            return CollidesCircleAabb(a.position, a.collisionRadius, b.position, b.collisionSize);
+
+        if (a.collisionType == CollisionType.SQAURE && b.collisionType == CollisionType.CIRCLE)
+            return CollidesCircleAabb(b.position, b.collisionRadius, a.position, a.collisionSize);
+
+        // Fallback (shouldn't happen)
+        return false;
+    }
+
+    private static bool CollidesAabbAabb(Vector2 aPos, Vector2 aSize, Vector2 bPos, Vector2 bSize)
+    {
+        Vector2 aHalf = aSize * 0.5f;
+        Vector2 bHalf = bSize * 0.5f;
+
+        if (Mathf.Abs(aPos.x - bPos.x) > (aHalf.x + bHalf.x)) return false;
+        if (Mathf.Abs(aPos.y - bPos.y) > (aHalf.y + bHalf.y)) return false;
         return true;
+    }
+
+    private static bool CollidesCircleCircle(Vector2 aPos, float aR, Vector2 bPos, float bR)
+    {
+        float r = aR + bR;
+        return (aPos - bPos).sqrMagnitude <= r * r;
+    }
+
+    private static bool CollidesCircleAabb(Vector2 cPos, float cR, Vector2 bPos, Vector2 bSize)
+    {
+        Vector2 half = bSize * 0.5f;
+
+        // Closest point on the box to the circle center
+        float closestX = Mathf.Clamp(cPos.x, bPos.x - half.x, bPos.x + half.x);
+        float closestY = Mathf.Clamp(cPos.y, bPos.y - half.y, bPos.y + half.y);
+        Vector2 closest = new Vector2(closestX, closestY);
+
+        return (cPos - closest).sqrMagnitude <= cR * cR;
     }
 
     private static void Collide(ref Entity a, ref Entity b, Context context)
     {
-        bool aIsShip = a.entityType == EntityType.SHIP_ROOM;
-        bool bIsShip = b.entityType == EntityType.SHIP_ROOM;
-
-        bool aIsAsteroid = a.entityType == EntityType.ASTEROID_SMALL || a.entityType == EntityType.ASTEROID_LARGE;
-        bool bIsAsteroid = b.entityType == EntityType.ASTEROID_SMALL || b.entityType == EntityType.ASTEROID_LARGE;
-
-        // asteroid hit ship
-        if (aIsShip && bIsAsteroid)
-        {
-            b.cleanup = true;
-            DoAsteroidDestruction(b, context);
-            DoRoomHit(ref a, context);
-        }
-        else if (bIsShip && aIsAsteroid)
-        {
-            a.cleanup = true;
-            DoAsteroidDestruction(a, context);
-            DoRoomHit(ref b, context);
-        }
-            
+        DoEntityCollision(ref a, context);
+        DoEntityCollision(ref b, context);            
     }
 
-    private static void DoAsteroidDestruction(in Entity asteroid, Context context)
+    private static void DoEntityCollision(ref Entity entity, Context context)
     {
-        bool large = asteroid.entityType == EntityType.ASTEROID_LARGE;
-        int count = large ? Rand.Range(6, 10) : Rand.Range(2, 5);
-
-        for(int i = 0; i < count; i++)
+        switch(entity.entityType)
         {
-            bool largeFragment = large && Rand.Chance(0.5f);
-
-            Entity fragment = EntityMaker.MakeAsteroidFragment(large: largeFragment);
-            fragment.velocity = asteroid.velocity.Rotate(Rand.Range(-30, 30f)) * Rand.Range(0.5f, 1f);
-            fragment.rotationRate = Rand.Range(0.5f, 2f);
-            fragment.position = asteroid.position + new Vector2(
-                Rand.Range(-0.5f, 0.5f), 
-                Rand.Range(-0.5f, 0.5f));
-
-            context.entities.Add(fragment);
+            case EntityType.ASTEROID_SMALL:
+            case EntityType.ASTEROID_LARGE:
+                DoEntityCollision_Asteroid(ref entity, context);
+            break;
+            case EntityType.SHIP_ROOM:
+                DoEntityCollision_Room(ref entity, context);
+            break;
+            case EntityType.SHIELD:
+                DoEntityCollision_Shield(ref entity, context);
+            break;
+            default:
+                Debug.LogError($"Collision with {entity.entityType} not supported.");
+            break;
         }
     }
 
-    private static void DoRoomHit(ref Entity room, Context context)
+    private static void DoEntityCollision_Room(ref Entity room, Context context)
     {
         room.damageFlashTicks = 5;
         room.hitPoints -= 10;
@@ -151,17 +169,60 @@ public static class Collisions
         }
     }
 
+    private static void DoEntityCollision_Asteroid(ref Entity asteroid, Context context)
+    {
+        asteroid.cleanup = true;
+
+        bool large = asteroid.entityType == EntityType.ASTEROID_LARGE;
+        int count = large ? Rand.Range(6, 10) : Rand.Range(2, 5);
+
+        for(int i = 0; i < count; i++)
+        {
+            bool largeFragment = large && Rand.Chance(0.5f);
+
+            Entity fragment = EntityMaker.MakeAsteroidFragment(large: largeFragment);
+            fragment.velocity = asteroid.velocity.Rotate(Rand.Range(-30, 30f)) * Rand.Range(0.5f, 1f);
+            fragment.rotationRate = Rand.Range(0.5f, 2f);
+            fragment.position = asteroid.position + new Vector2(
+                Rand.Range(-0.5f, 0.5f), 
+                Rand.Range(-0.5f, 0.5f));
+
+            context.entities.Add(fragment);
+        }
+    }
+
+    private static void DoEntityCollision_Shield(ref Entity shield, Context context)
+    {
+        
+    }
+
     public static void Update(Context context)
     {
         for(int i = 0; i < context.entities.Count; i++)
         {
-            if( context.entities[i].collisionSize == Vector2.zero )
+            if( context.entities[i].collisionSize == Vector2.zero && 
+                context.entities[i].collisionRadius == 0f )
+            {
                 continue;
+            }
+
+            switch(context.entities[i].collisionType)
+            {
+                case CollisionType.SQAURE:
+                DebugUtils.DrawRect(
+                    context.entities[i].position, 
+                    context.entities[i].collisionSize, 
+                    Color.green);
+                break;
+                case CollisionType.CIRCLE:
+                DebugUtils.DrawCircle(
+                    context.entities[i].position, 
+                    context.entities[i].collisionRadius, 
+                    Color.green);
+                break;
+            }
             
-            DebugUtils.DrawRect(
-                context.entities[i].position, 
-                context.entities[i].collisionSize, 
-                Color.green);
+            
         }
     }
 }

@@ -64,12 +64,27 @@ public static class ShipUtils
 
         context.entities.Add(new Entity()
         {
-           entityType = EntityType.SHIP_SHIELD,
-           drawSize = Vector2.one,
-           position = roomRect.center,
-           sortingOrder = 1,
-           parentId = room.id,
-           tags = EntityTag.Shield
+            entityType = EntityType.SHIP_SHIELD,
+            drawSize = Vector2.one,
+            position = roomRect.center,
+            sortingOrder = 1,
+            parentId = room.id,
+            tags = EntityTag.Shield
+        });
+
+        context.entities.Add(new Entity()
+        {
+            entityType = EntityType.SHIELD,
+            drawSize = Vector2.one,
+            position = roomRect.center,
+            sortingOrder = 1,
+            parentId = room.id,
+            tags = EntityTag.Shield,
+            shieldRadius = 8,
+            collisionType = CollisionType.CIRCLE,
+            collisionRadius = 8,
+            collisionLayer = CollisionLayer.Ship,   
+            collideWithMask = CollisionLayer.Asteroid,
         });
     }
 

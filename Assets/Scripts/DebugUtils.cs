@@ -17,4 +17,29 @@ public static class DebugUtils
         Debug.DrawLine(c, d, color, duration);
         Debug.DrawLine(d, a, color, duration);
     }
+
+    public static void DrawCircle(Vector2 center, float radius, Color color, float duration = 0f, int segments = 32)
+    {
+        if (radius <= 0f || segments < 3)
+            return;
+
+        float step = 2f * Mathf.PI / segments;
+
+        Vector3 prev = new Vector3(
+            center.x + Mathf.Cos(0f) * radius,
+            center.y + Mathf.Sin(0f) * radius,
+            0f);
+
+        for (int i = 1; i <= segments; i++)
+        {
+            float a = step * i;
+            Vector3 cur = new Vector3(
+                center.x + Mathf.Cos(a) * radius,
+                center.y + Mathf.Sin(a) * radius,
+                0f);
+
+            Debug.DrawLine(prev, cur, color, duration);
+            prev = cur;
+        }
+    }
 }

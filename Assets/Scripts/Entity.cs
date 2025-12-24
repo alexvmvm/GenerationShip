@@ -9,6 +9,7 @@ public enum EntityType
     SHIP_WALL,
     SHIP_ENGINE,
     SHIP_SHIELD,
+    SHIELD,
     SHIP_ROOM,
     BACKDROP_PARTICLE,
     ASTEROID_SMALL,
@@ -42,6 +43,11 @@ public enum CollisionLayer : uint
     Asteroid  = 1 << 1,
 }
 
+public enum CollisionType
+{
+    SQAURE,
+    CIRCLE
+}   
 
 public struct Entity
 {
@@ -58,7 +64,9 @@ public struct Entity
     public float rotationRate;
 
     // collision
+    public CollisionType collisionType;
     public Vector2 collisionSize;
+    public float collisionRadius;
     public CollisionLayer collisionLayer; 
     public CollisionLayer collideWithMask; 
 
@@ -70,7 +78,7 @@ public struct Entity
     public int damageFlashTicks; 
     public int hitPoints;
     public Rect roomBounds;
-    public List<int> connectedRooms;
+    public float shieldRadius;    
 
     // cleanup
     public bool cleanupIfNotVisible;

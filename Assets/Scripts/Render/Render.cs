@@ -67,6 +67,8 @@ public static class Render
         EntityType.ASTEROID_LARGE           => ResourceCache.Sprite("Textures/asteroid-large"),
         EntityType.ASTEROID_FRAGMENT_SMALL  => ResourceCache.Sprite("Textures/asteroid-fragment-small"),
         EntityType.ASTEROID_FRAGMENT_LARGE  => ResourceCache.Sprite("Textures/asteroid-fragment-large"),
+        EntityType.SHIP_TURRET              => ResourceCache.Sprite("Textures/turret-base"),
+        EntityType.SHIP_TURRET_TOP          => ResourceCache.Sprite("Textures/turret-top"),
         _                                   => null
     }; 
 
@@ -129,6 +131,11 @@ public static class Render
         mpb.SetFloat("_FillAlpha", fillAlpha);
 
         Graphics.DrawMesh(shieldQuad, matrix, shieldMaterial, 0, null, 0, mpb);
+    }
+
+    private static void DrawEntity_Turret(Entity e)
+    {
+        DrawEntity_Sprite(e);
     }
 
     private static Mesh BuildQuad()

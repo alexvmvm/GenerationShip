@@ -16,6 +16,9 @@ public static class Shields
             if( context.entities[i].entityType != EntityType.SHIELD )
                 continue;
 
+            if( context.entities[i].cleanup || context.entities[i].cleanupIfNotVisible )
+                continue;
+
             Vector2 pos = context.entities[i].position.WorldToGUI();
 
             Rect rect = new(

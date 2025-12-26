@@ -89,6 +89,38 @@ public static class ShipUtils
         });
     }
 
+    public static void AddTurretRoom(int shipId, in Context context)
+    {
+        Rect roomRect = GetBestRoomRect(shipId, 6, 6, context);
+
+        // if we can't place a room something went wrong
+        Debug.Assert(!roomRect.Equals(default));
+
+        Entity room = CreateRoom(shipId, roomRect, context, EntityTag.Turret);
+
+        context.entities.Add(new Entity()
+        {
+            entityType = EntityType.SHIP_TURRET,
+            drawSize = Vector2.one,
+            position = roomRect.center,
+            sortingOrder = 1,
+            parentId = room.id,
+            tags = EntityTag.Turret
+        });
+
+        context.entities.Add(new Entity()
+        {
+            entityType = EntityType.SHIP_TURRET_TOP,
+            drawSize = Vector2.one,
+            position = roomRect.center,
+            sortingOrder = 2,
+            parentId = room.id,
+            tags = EntityTag.Shield,
+            hitPoints = 100,
+            shieldRadius = 8,
+        });
+    }
+
     public static Entity CreateRoom(int shipId, Rect roomRect, Context context, EntityTag tags)
     {
         var room = new Entity

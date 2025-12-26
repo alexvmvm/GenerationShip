@@ -103,6 +103,11 @@ public class Game : MonoBehaviour
         {
             ShipUtils.AddShieldRoom(shipId, GameContext);
         }
+
+        if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 2 * BtnHeight - 20, BtnWidth, BtnHeight), "Add turret") )
+        {
+            ShipUtils.AddTurretRoom(shipId, GameContext);
+        }
     }
 
 

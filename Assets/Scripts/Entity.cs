@@ -12,6 +12,7 @@ public enum EntityType
     SHIELD,
     SHIP_TURRET,
     SHIP_TURRET_TOP,
+    PROJECTILE,
     SHIP_ROOM,
     BACKDROP_PARTICLE,
     ASTEROID_SMALL,

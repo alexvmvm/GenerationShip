@@ -122,6 +122,9 @@ public static class Collisions
             case EntityType.SHIELD:
                 DoEntityCollision_Shield(ref entity, context);
             break;
+            case EntityType.PROJECTILE:
+                DoEntityCollision_Projectile(ref entity, context);
+            break;
             default:
                 Debug.LogError($"Collision with {entity.entityType} not supported.");
             break;
@@ -205,6 +208,11 @@ public static class Collisions
 
         shield.shieldChargeTicks = 0;
         shield.shieldHitLastTick = Game.TicksGame;
+    }
+
+    private static void DoEntityCollision_Projectile(ref Entity shield, Context context)
+    {
+        shield.cleanup = true;
     }
 
     public static void Update(Context context)

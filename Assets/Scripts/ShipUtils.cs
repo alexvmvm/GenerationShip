@@ -98,8 +98,11 @@ public static class ShipUtils
 
         Entity room = CreateRoom(shipId, roomRect, context, EntityTag.Turret);
 
+        int turretId = Rand.IntPositive;
+
         context.entities.Add(new Entity()
         {
+            id = turretId,
             entityType = EntityType.SHIP_TURRET,
             drawSize = Vector2.one,
             position = roomRect.center,

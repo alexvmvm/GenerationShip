@@ -125,6 +125,7 @@ public class Game : MonoBehaviour
         Asteroids.Tick(context);
         BackgroupEffects.Tick(context);
         Shields.Tick(context);
+        Turrets.Tick(context);
     }
 
     void GatherInput()

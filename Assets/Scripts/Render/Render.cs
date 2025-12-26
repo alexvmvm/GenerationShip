@@ -69,6 +69,7 @@ public static class Render
         EntityType.ASTEROID_FRAGMENT_LARGE  => ResourceCache.Sprite("Textures/asteroid-fragment-large"),
         EntityType.SHIP_TURRET              => ResourceCache.Sprite("Textures/turret-base"),
         EntityType.SHIP_TURRET_TOP          => ResourceCache.Sprite("Textures/turret-top"),
+        EntityType.PROJECTILE               => ResourceCache.Sprite("Textures/projectile"),
         _                                   => null
     }; 
 
@@ -109,7 +110,7 @@ public static class Render
                                   Color color, float edgeWidth = 0.08f,
                                   float edgeAlpha = 0.35f, float fillAlpha = 0.02f)
     {
-        if( e.hitPoints <= 0 )
+        if( e.hitPoints <= 0 || e.cleanup || e.cleanupIfNotVisible )
             return;
 
         if (shieldMaterial == null) 

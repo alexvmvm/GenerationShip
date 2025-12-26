@@ -42,8 +42,8 @@ public readonly struct Context
 public class Game : MonoBehaviour
 {
     // Config
-    const float TICK_RATE = 60f;
-    static readonly float TICK_DT = 1f / TICK_RATE;
+    public const int TicksPerRealSecond = 60;
+    static readonly float TICK_DT = 1f / TicksPerRealSecond;
 
     //Working vars
     private readonly List<Entity> entities = new();    
@@ -91,7 +91,10 @@ public class Game : MonoBehaviour
 
         GUI.Label(new Rect(10, 10, 600, 400), sb.ToString());
 
-        GameUI.OnGUI(GameContext);
+        Context context = GameContext;
+
+        GameUI.OnGUI(context);
+        Shields.OnGUI(in context);
 
         const int BtnWidth = 120;
         const int BtnHeight = 40;
@@ -116,6 +119,7 @@ public class Game : MonoBehaviour
         Collisions.Tick(context);
         Asteroids.Tick(context);
         BackgroupEffects.Tick(context);
+        Shields.Tick(context);
     }
 
     void GatherInput()

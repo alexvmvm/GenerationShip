@@ -43,7 +43,14 @@ public static class Collisions
 
     private static bool ShouldCollide(in Entity a, in Entity b)
     {
-        return ((a.collideWithMask & b.collisionLayer) != 0) && ((b.collideWithMask & a.collisionLayer) != 0);
+        if(!((a.collideWithMask & b.collisionLayer) != 0) || !((b.collideWithMask & a.collisionLayer) != 0))
+            return false;
+
+        // shield has no charge
+        if((a.entityType == EntityType.SHIELD && a.hitPoints <= 0) || (b.entityType == EntityType.SHIELD && b.hitPoints <= 0))
+            return false;
+
+        return true;
     }
 
     public static bool Collides(in Entity a, in Entity b)
@@ -193,7 +200,11 @@ public static class Collisions
 
     private static void DoEntityCollision_Shield(ref Entity shield, Context context)
     {
-        
+        shield.hitPoints -= 10;
+        shield.hitPoints = Math.Max(0, shield.hitPoints);
+
+        shield.shieldChargeTicks = 0;
+        shield.shieldHitLastTick = Game.TicksGame;
     }
 
     public static void Update(Context context)

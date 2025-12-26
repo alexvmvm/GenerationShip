@@ -80,6 +80,7 @@ public static class ShipUtils
             sortingOrder = 1,
             parentId = room.id,
             tags = EntityTag.Shield,
+            hitPoints = 100,
             shieldRadius = 8,
             collisionType = CollisionType.CIRCLE,
             collisionRadius = 8,

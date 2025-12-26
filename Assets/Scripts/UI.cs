@@ -302,17 +302,19 @@ public static class UI
         EnsureStyles();
         t01 = Mathf.Clamp01(t01);
 
-        backgroundColor ??= new Color(1f, 1f, 1f, 0.08f);
-        fillColor ??= new Color(1f, 1f, 1f, 0.25f);
-        outlineColor ??= new Color(1f, 1f, 1f, 0.20f);
+        backgroundColor ??= new Color(1f, 1f, 1f, 1f);
+        fillColor ??= new Color(0f, 1f, 0f, 1f);
+        outlineColor ??= Color.gray;
 
         // Background
         Rect(r, backgroundColor.Value);
-        Outline(r, outlineColor.Value, 1f);
 
         // Fill (use white texture + GUI.color)
         var fill = new Rect(r.xMin, r.yMin, r.width * t01, r.height);
         Rect(fill, fillColor.Value);
+
+        // Outline
+        Outline(r, outlineColor.Value, 1f);
 
         if (!string.IsNullOrEmpty(labelText))
             GUI.Label(r, labelText, label);

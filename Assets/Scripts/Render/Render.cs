@@ -16,7 +16,7 @@ public static class Render
         switch(e.entityType)
         {
             case EntityType.SHIELD:
-            DrawEntity_Shield(e.position, e.shieldRadius, e.sortingOrder, Color.green);
+            DrawEntity_Shield(e, e.position, e.shieldRadius, e.sortingOrder, Color.green);
             break;
             default: 
             DrawEntity_Sprite(e);
@@ -103,11 +103,12 @@ public static class Render
         return mesh;
     }
 
-    private static void DrawEntity_Shield(Vector2 center, float radiusWorld, int sortingOrder,
+    private static void DrawEntity_Shield(Entity e, Vector2 center, float radiusWorld, int sortingOrder,
                                   Color color, float edgeWidth = 0.08f,
                                   float edgeAlpha = 0.35f, float fillAlpha = 0.02f)
     {
-
+        if( e.hitPoints <= 0 )
+            return;
 
         if (shieldMaterial == null) 
             shieldMaterial = new Material(Shader.Find("Unlit/ShieldCircle"));

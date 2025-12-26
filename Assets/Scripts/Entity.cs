@@ -78,7 +78,11 @@ public struct Entity
     public int damageFlashTicks; 
     public int hitPoints;
     public Rect roomBounds;
+
+    // shield
     public float shieldRadius;    
+    public int shieldChargeTicks;
+    public float shieldHitLastTick;
 
     // cleanup
     public bool cleanupIfNotVisible;

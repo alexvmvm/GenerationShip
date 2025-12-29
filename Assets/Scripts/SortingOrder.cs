@@ -10,4 +10,7 @@ public static class SortingOrder
     public const int ShipBuilding_Above = 2;
 
     public const int BlueprintOffset = 100;
+
+
+    public const float LayerDelta = -0.001f;
 }

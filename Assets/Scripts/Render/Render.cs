@@ -22,6 +22,9 @@ public static class Render
             DrawEntity_Sprite(e);
             break;
         }
+
+        // draw extra stuff
+        DrawEntity_Extra(e);
     }
 
     private static void DrawEntity_Sprite(Entity e)
@@ -36,7 +39,7 @@ public static class Render
         Mesh mesh = GetMeshForSprite(sprite);
 
         Quaternion rot = Quaternion.Euler(0, 0, e.rotation);
-        Vector3 worldPos = new(e.position.x, e.position.y, -e.sortingOrder * 0.001f);
+        Vector3 worldPos = new(e.position.x, e.position.y, e.sortingOrder * SortingOrder.LayerDelta);
 
         // NOTE: this scales the sprite mesh itself, not "fit inside drawSize".
         Vector3 scale = new(e.drawSize.x, e.drawSize.y, 1f);
@@ -137,9 +140,15 @@ public static class Render
         Graphics.DrawMesh(shieldQuad, matrix, shieldMaterial, 0, null, 0, mpb);
     }
 
-    private static void DrawEntity_Turret(Entity e)
+    private static void DrawEntity_Extra(Entity e)
     {
-        DrawEntity_Sprite(e);
+        switch(e.entityType)
+        {
+            case EntityType.SHIP_ENGINE:
+                if( !e.cleanup && !e.cleanupIfNotVisible )
+                    ThrusterRenderer.DrawThruster(e.position, e.rotation, e.sortingOrder + 1);
+            break;
+        }
     }
 
     private static Mesh BuildQuad()

@@ -62,6 +62,7 @@ public class Game : MonoBehaviour
     //Props
     public static int TicksGame => ticksGame;
     private Context GameContext => new(entities, Camera.main.GetWorldRect());
+    public GameMode Mode => gameMode;
 
     void Start()
     {
@@ -90,7 +91,10 @@ public class Game : MonoBehaviour
         // Render / presentation (per-frame)
         DrawEntities();
 
-        Collisions.Update(GameContext);
+        Context context = GameContext;
+
+        Collisions.Update(context);
+        ShipEditor.Update(context);
     }
 
     private readonly StringBuilder sb = new(1024);
@@ -110,16 +114,10 @@ public class Game : MonoBehaviour
         const int BtnHeight = 40;
 
         if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - BtnHeight - 10, BtnWidth, BtnHeight), "Add shield") )
-        {
-            Rect rect = ShipUtils.GetBestRoomRect(shipId, EntityType.SHIP_ROOM_SHIELD, GameContext);
-            context.entities.AddRange(ShipUtils.CreateShipRoom(shipId, EntityType.SHIP_ROOM_SHIELD, rect.position));
-        }
+            ShipEditor.DoShipEditor(shipId, EntityType.SHIP_ROOM_SHIELD, context);
 
         if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 2 * BtnHeight - 20, BtnWidth, BtnHeight), "Add turret") )
-        {
-            Rect rect = ShipUtils.GetBestRoomRect(shipId, EntityType.SHIP_ROOM_TURRET, GameContext);
-            context.entities.AddRange(ShipUtils.CreateShipRoom(shipId, EntityType.SHIP_ROOM_TURRET, rect.position));
-        }
+            ShipEditor.DoShipEditor(shipId, EntityType.SHIP_ROOM_TURRET, context);
     }
 
 

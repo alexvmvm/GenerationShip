@@ -136,7 +136,7 @@ public static class ShipUtils
                     entityType = EntityType.SHIP_ENGINE,
                     drawSize = Vector2.one,
                     position = new(rect.xMin + 1.5f, rect.yMin + 0.5f),
-                    sortingOrder = 1,
+                    sortingOrder = SortingOrder.ShipBuilding,
                     parentId = roomId,
                     tags = EntityTag.Engine
                 });
@@ -146,7 +146,7 @@ public static class ShipUtils
                     entityType = EntityType.SHIP_ENGINE,
                     drawSize = Vector2.one,
                     position = new(rect.xMax - 1.5f, rect.yMin + 0.5f),
-                    sortingOrder = 1,
+                    sortingOrder = SortingOrder.ShipBuilding,
                     parentId = roomId,
                     tags = EntityTag.Engine
                 });
@@ -160,7 +160,7 @@ public static class ShipUtils
                     entityType = EntityType.SHIP_TURRET,
                     drawSize = Vector2.one,
                     position = rect.center,
-                    sortingOrder = 1,
+                    sortingOrder = SortingOrder.ShipBuilding,
                     parentId = roomId,
                     tags = EntityTag.Turret
                 });
@@ -170,7 +170,7 @@ public static class ShipUtils
                     entityType = EntityType.SHIP_TURRET_TOP,
                     drawSize = Vector2.one,
                     position = rect.center,
-                    sortingOrder = 2,
+                    sortingOrder = SortingOrder.ShipBuilding_Above,
                     parentId = roomId,
                     tags = EntityTag.Shield,
                     hitPoints = 100,
@@ -185,7 +185,7 @@ public static class ShipUtils
                     entityType = EntityType.SHIP_SHIELD,
                     drawSize = Vector2.one,
                     position = rect.center,
-                    sortingOrder = 1,
+                    sortingOrder = SortingOrder.ShipBuilding_Above,
                     parentId = roomId,
                     tags = EntityTag.Shield
                 });
@@ -195,7 +195,7 @@ public static class ShipUtils
                     entityType = EntityType.SHIELD,
                     drawSize = Vector2.one,
                     position = rect.center,
-                    sortingOrder = 1,
+                    sortingOrder = SortingOrder.ShipBuilding,
                     parentId = roomId,
                     tags = EntityTag.Shield,
                     hitPoints = 100,
@@ -215,7 +215,7 @@ public static class ShipUtils
     private static (int width, int height) RoomSize(EntityType type) => type switch
     {
         EntityType.SHIP_ROOM_SHIELD => (6, 6),
-        EntityType.SHIP_ROOM_TURRET => (8, 8),
+        EntityType.SHIP_ROOM_TURRET => (6, 6),
         EntityType.SHIP_ROOM_ENGINE => (6, 8),
         _ => throw new NotImplementedException("Unknown room type " + type) 
     };
@@ -227,95 +227,4 @@ public static class ShipUtils
         EntityType.SHIP_ROOM_ENGINE => EntityTag.Room | EntityTag.Engine,
         _ => throw new NotImplementedException("Unknown room type " + type) 
     };
-
-    public static Rect GetBestRoomRect(int shipId, EntityType roomType, Context context)
-    {
-        var (width, height) = RoomSize(roomType);
-
-        float bestScore = 0f;
-        Rect  bestRect = default;
-
-        var ship = GetShipData(shipId, context.entities);
-
-        int tries = 200;
-        while( tries-- > 0 )
-        {
-            var roomRect = ship.roomRects[Rand.Range(0, ship.roomRects.Count)];
-            
-            Rect rect;
-            if( Rand.Bool )
-            {
-                int x = Rand.Range(Mathf.FloorToInt(roomRect.xMin), Mathf.FloorToInt(roomRect.xMax));
-                int y = Rand.Bool ? Mathf.FloorToInt(roomRect.yMin) - height : Mathf.FloorToInt(roomRect.yMax);
-
-                rect = new Rect(x, y, width, height);
-            }
-            else
-            {
-                int x = Rand.Bool ? Mathf.FloorToInt(roomRect.xMin) - width : Mathf.FloorToInt(roomRect.xMax);
-                int y = Rand.Range(Mathf.FloorToInt(roomRect.yMin), Mathf.FloorToInt(roomRect.yMax));
-
-                rect = new Rect(x, y, width, height);
-            }
-
-            var score = RoomPositionScore(rect, ship);
-            if( score > 0 && score > bestScore )
-            {
-                bestRect = rect;
-                bestScore = score;
-            }
-        }
-
-        return bestRect;
-    }
-
-    private static float RoomPositionScore(Rect rect, ShipData shipData)
-    {
-        Debug.Assert(!rect.Equals(default));
-
-        const float ALIGN_BONUS = 2f;   // how much you reward perfect alignment
-        const float ALIGN_MAX = 6f;     // diff at which bonus becomes 0
-        const float CLOSENESS_WEIGHT = 10f; // weight it relative to your other terms
-
-        float score = 0f;
-        
-        var rooms = shipData.roomRects;
-
-        // Cannot use if we overlap another room
-        for(int i = 0; i < rooms.Count; i++)
-        {
-            Rect otherRect = rooms[i];
-            if( otherRect.Overlaps(rect) )
-                return 0f;
-
-            score += RectUtils.AdjacentCellCount(rect, otherRect);
-
-            // alignent score
-            {
-                float xDiff = Mathf.Abs(rect.center.x - otherRect.center.x);
-                float yDiff = Mathf.Abs(rect.center.y - otherRect.center.y);
-
-                float xAlign = Mathf.Clamp01(1f - (xDiff / ALIGN_MAX)); // 1 at 0, 0 at ALIGN_MAX+
-                float yAlign = Mathf.Clamp01(1f - (yDiff / ALIGN_MAX));
-
-                score += ALIGN_BONUS * (xAlign + yAlign);
-            }
-
-            var centroid = Vector2.zero;
-            for(int j = 0; j < rooms.Count; j++)
-            {
-                centroid += rooms[i].center;
-            }
-            centroid /= rooms.Count;
-
-            // distance score
-            {
-                float distanceScore = 1f / (1f + Vector2.Distance(centroid, rect.center));
-                score += distanceScore * CLOSENESS_WEIGHT;
-            }
-            
-        }
-
-        return score;
-    }
 }

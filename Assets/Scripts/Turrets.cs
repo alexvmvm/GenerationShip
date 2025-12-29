@@ -31,6 +31,7 @@ public static class Turrets
                 proj.collisionRadius = 0.25f;
                 proj.collisionLayer = CollisionLayer.Ship;
                 proj.collideWithMask = CollisionLayer.Asteroid;
+                proj.cleanupIfNotVisible = true;
                 context.entities.Add(proj);
             }
         }

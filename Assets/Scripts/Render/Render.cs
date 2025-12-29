@@ -36,7 +36,7 @@ public static class Render
         Mesh mesh = GetMeshForSprite(sprite);
 
         Quaternion rot = Quaternion.Euler(0, 0, e.rotation);
-        Vector3 worldPos = new(e.position.x, e.position.y, -e.sortingOrder);
+        Vector3 worldPos = new(e.position.x, e.position.y, -e.sortingOrder * 0.001f);
 
         // NOTE: this scales the sprite mesh itself, not "fit inside drawSize".
         Vector3 scale = new(e.drawSize.x, e.drawSize.y, 1f);
@@ -44,6 +44,9 @@ public static class Render
         var matrix = Matrix4x4.TRS(worldPos, rot, scale);
 
         Color tint = (e.damageFlashTicks > 0) ? Color.red : Color.white;
+
+        if( e.drawColorOverride is Color color )
+            tint = color;
 
         mpb.Clear();
         mpb.SetTexture("_MainTex", sprite.texture);

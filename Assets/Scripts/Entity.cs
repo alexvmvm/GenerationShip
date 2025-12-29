@@ -88,11 +88,13 @@ public struct Entity
     // draw
     public Vector2 drawSize;
     public int sortingOrder;
+    public Color? drawColorOverride;
 
     // misc
     public int damageFlashTicks; 
     public int hitPoints;
     public Rect roomBounds;
+    public bool isBeingPlaced;
 
     // shield
     public float shieldRadius;    

@@ -116,7 +116,9 @@ public static class Collisions
             case EntityType.ASTEROID_LARGE:
                 DoEntityCollision_Asteroid(ref entity, context);
             break;
-            case EntityType.SHIP_ROOM:
+            case EntityType.SHIP_ROOM_SHIELD:
+            case EntityType.SHIP_ROOM_TURRET:
+            case EntityType.SHIP_ROOM_ENGINE:
                 DoEntityCollision_Room(ref entity, context);
             break;
             case EntityType.SHIELD:

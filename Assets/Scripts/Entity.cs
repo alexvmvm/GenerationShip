@@ -4,21 +4,32 @@ using UnityEngine;
 
 public enum EntityType
 {
+    // misc
     SHIP,
+    PROJECTILE,
+    BACKDROP_PARTICLE,
+
+    // asteroid
+    ASTEROID_SMALL,
+    ASTEROID_LARGE,
+    ASTEROID_FRAGMENT_SMALL,
+    ASTEROID_FRAGMENT_LARGE,
+
+    // ship structures
     SHIP_FLOOR,
     SHIP_WALL,
+
+    // ship buildings
     SHIP_ENGINE,
     SHIP_SHIELD,
     SHIELD,
     SHIP_TURRET,
     SHIP_TURRET_TOP,
-    PROJECTILE,
-    SHIP_ROOM,
-    BACKDROP_PARTICLE,
-    ASTEROID_SMALL,
-    ASTEROID_LARGE,
-    ASTEROID_FRAGMENT_SMALL,
-    ASTEROID_FRAGMENT_LARGE
+
+    // ship rooms
+    SHIP_ROOM_ENGINE,
+    SHIP_ROOM_SHIELD,
+    SHIP_ROOM_TURRET
 }
 
 [System.Flags]

@@ -27,6 +27,12 @@ public struct InputEvent
     public Cardinal direction;
 }
 
+public enum GameMode
+{
+    Playing,
+    ShipEditor
+}
+
 public readonly struct Context
 {
     public readonly List<Entity> entities;
@@ -51,6 +57,7 @@ public class Game : MonoBehaviour
     private float tickAcc;
     private static int ticksGame;
     private int shipId;
+    private GameMode gameMode = GameMode.Playing;
 
     //Props
     public static int TicksGame => ticksGame;
@@ -69,12 +76,15 @@ public class Game : MonoBehaviour
         GatherInput();
 
         // Run deterministic ticks at 60hz
-        tickAcc += Time.deltaTime;
-        while (tickAcc >= TICK_DT)
+        if( gameMode == GameMode.Playing)
         {
-            Tick();
-            tickAcc -= TICK_DT;
-            ticksGame++;
+            tickAcc += Time.deltaTime;
+            while (tickAcc >= TICK_DT)
+            {
+                Tick();
+                tickAcc -= TICK_DT;
+                ticksGame++;
+            }
         }
 
         // Render / presentation (per-frame)
@@ -101,12 +111,14 @@ public class Game : MonoBehaviour
 
         if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - BtnHeight - 10, BtnWidth, BtnHeight), "Add shield") )
         {
-            ShipUtils.AddShieldRoom(shipId, GameContext);
+            Rect rect = ShipUtils.GetBestRoomRect(shipId, EntityType.SHIP_ROOM_SHIELD, GameContext);
+            context.entities.AddRange(ShipUtils.CreateShipRoom(shipId, EntityType.SHIP_ROOM_SHIELD, rect.position));
         }
 
         if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 2 * BtnHeight - 20, BtnWidth, BtnHeight), "Add turret") )
         {
-            ShipUtils.AddTurretRoom(shipId, GameContext);
+            Rect rect = ShipUtils.GetBestRoomRect(shipId, EntityType.SHIP_ROOM_TURRET, GameContext);
+            context.entities.AddRange(ShipUtils.CreateShipRoom(shipId, EntityType.SHIP_ROOM_TURRET, rect.position));
         }
     }
 
@@ -177,5 +189,10 @@ public class Game : MonoBehaviour
         {
             Render.DrawEntity(entities[i]);    
         }
+    }
+
+    public void SetMode(GameMode mode)
+    {
+        this.gameMode = mode;
     }
 }

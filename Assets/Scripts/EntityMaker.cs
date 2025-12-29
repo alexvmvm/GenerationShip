@@ -51,27 +51,7 @@ public static class EntityMaker
 
         Rect rect = new Rect(-width/2f, -height/2f, width, height);
 
-        Entity room = ShipUtils.CreateRoom(ship.id, rect, context, EntityTag.Engine);
-
-        context.entities.Add(new Entity()
-        {
-           entityType = EntityType.SHIP_ENGINE,
-           drawSize = Vector2.one,
-           position = new(rect.xMin + 1.5f, rect.yMin + 0.5f),
-           sortingOrder = 1,
-           parentId = room.id,
-           tags = EntityTag.Engine
-        });
-
-        context.entities.Add(new Entity()
-        {
-           entityType = EntityType.SHIP_ENGINE,
-           drawSize = Vector2.one,
-           position = new(rect.xMax - 1.5f, rect.yMin + 0.5f),
-           sortingOrder = 1,
-           parentId = room.id,
-           tags = EntityTag.Engine
-        });
+        context.entities.AddRange(ShipUtils.CreateShipRoom(ship.id, EntityType.SHIP_ROOM_ENGINE, rect.position));
 
         return ship;
     }  

@@ -9,7 +9,6 @@ public struct ShipData
     public List<Rect> roomRects;
     public List<Entity> rooms;
     public Dictionary<Vector2Int, Entity> structureByPosition;
-    public Vector2 centroid;
 }
 
 public static class ShipUtils
@@ -53,105 +52,46 @@ public static class ShipUtils
         return ship;
     }
 
-    public static void AddShieldRoom(int shipId, in Context context)
+    public static List<Entity> CreateShipRoom(int shipId, EntityType entityType, Vector2 root)
     {
-        Rect roomRect = GetBestRoomRect(shipId, 6, 6, context);
+        Debug.Assert(
+            entityType == EntityType.SHIP_ROOM_SHIELD || 
+            entityType == EntityType.SHIP_ROOM_TURRET || 
+            entityType == EntityType.SHIP_ROOM_ENGINE, 
+            "non-room entity type passed to CreateRoom");
 
-        // if we can't place a room something went wrong
-        Debug.Assert(!roomRect.Equals(default));
+        var (width, height) = RoomSize(entityType);
 
-        Entity room = CreateRoom(shipId, roomRect, context, EntityTag.Shield);
+        var rect = new Rect(root.x, root.y, width, height);
 
-        context.entities.Add(new Entity()
-        {
-            entityType = EntityType.SHIP_SHIELD,
-            drawSize = Vector2.one,
-            position = roomRect.center,
-            sortingOrder = 1,
-            parentId = room.id,
-            tags = EntityTag.Shield
-        });
+        var entities = new List<Entity>();
 
-        context.entities.Add(new Entity()
-        {
-            entityType = EntityType.SHIELD,
-            drawSize = Vector2.one,
-            position = roomRect.center,
-            sortingOrder = 1,
-            parentId = room.id,
-            tags = EntityTag.Shield,
-            hitPoints = 100,
-            shieldRadius = 8,
-            collisionType = CollisionType.CIRCLE,
-            collisionRadius = 8,
-            collisionLayer = CollisionLayer.Ship,   
-            collideWithMask = CollisionLayer.Asteroid,
-        });
-    }
-
-    public static void AddTurretRoom(int shipId, in Context context)
-    {
-        Rect roomRect = GetBestRoomRect(shipId, 6, 6, context);
-
-        // if we can't place a room something went wrong
-        Debug.Assert(!roomRect.Equals(default));
-
-        Entity room = CreateRoom(shipId, roomRect, context, EntityTag.Turret);
-
-        int turretId = Rand.IntPositive;
-
-        context.entities.Add(new Entity()
-        {
-            id = turretId,
-            entityType = EntityType.SHIP_TURRET,
-            drawSize = Vector2.one,
-            position = roomRect.center,
-            sortingOrder = 1,
-            parentId = room.id,
-            tags = EntityTag.Turret
-        });
-
-        context.entities.Add(new Entity()
-        {
-            entityType = EntityType.SHIP_TURRET_TOP,
-            drawSize = Vector2.one,
-            position = roomRect.center,
-            sortingOrder = 2,
-            parentId = room.id,
-            tags = EntityTag.Shield,
-            hitPoints = 100,
-            shieldRadius = 8,
-        });
-    }
-
-    public static Entity CreateRoom(int shipId, Rect roomRect, Context context, EntityTag tags)
-    {
         var room = new Entity
         {
-            entityType = EntityType.SHIP_ROOM,
+            entityType = entityType,
             id = Rand.IntPositive,
             parentId = shipId,
-            position = roomRect.position + new Vector2(roomRect.width / 2f, roomRect.height / 2f),
-            collisionSize = new Vector2(roomRect.width, roomRect.height),
+            position = rect.position + (rect.size/2f),
+            collisionSize = new Vector2(width, height),
             collisionLayer = CollisionLayer.Ship,
             collideWithMask = CollisionLayer.Asteroid,
             hitPoints = DamageTuning.RoomHitpoints,
-            tags = EntityTag.Room | tags,
-            roomBounds = roomRect
+            tags = RoomTags(entityType),
+            roomBounds = rect
         };
 
-        context.entities.Add(room);
+        entities.Add(room);
 
         // place the floors
-        for (int x = 0; x < roomRect.width; x++)
+        for (int x = 0; x < width; x++)
         {
-            for(int y = 0; y < roomRect.height; y++)
+            for(int y = 0; y < height; y++)
             {
-                Vector2 position = new(roomRect.x + x + 0.5f, roomRect.y + y + 0.5f);
+                Vector2 position = new(rect.x + x + 0.5f, rect.y + y + 0.5f);
 
                 Entity entity;
 
-                if( x == 0 || y == 0 || x == roomRect.width - 1 || y == roomRect.height - 1)
+                if( x == 0 || y == 0 || x == rect.width - 1 || y == rect.height - 1)
                 {
                     entity = new()
                     {
@@ -174,15 +114,124 @@ public static class ShipUtils
                     };
                 }
                 
-                context.entities.Add(entity);
+                entities.Add(entity);
             }
         }
 
-        return room;
+        entities.AddRange(GetRoomBuildings(entityType, rect, room.id));
+
+        return entities;
     }
 
-    private static Rect GetBestRoomRect(int shipId, int width, int height, Context context)
+    private static List<Entity> GetRoomBuildings(EntityType roomType, Rect rect, int roomId)
     {
+        var entities = new List<Entity>();
+
+        switch(roomType)
+        {
+            case EntityType.SHIP_ROOM_ENGINE:
+            
+                entities.Add(new Entity()
+                {
+                    entityType = EntityType.SHIP_ENGINE,
+                    drawSize = Vector2.one,
+                    position = new(rect.xMin + 1.5f, rect.yMin + 0.5f),
+                    sortingOrder = 1,
+                    parentId = roomId,
+                    tags = EntityTag.Engine
+                });
+
+                entities.Add(new Entity()
+                {
+                    entityType = EntityType.SHIP_ENGINE,
+                    drawSize = Vector2.one,
+                    position = new(rect.xMax - 1.5f, rect.yMin + 0.5f),
+                    sortingOrder = 1,
+                    parentId = roomId,
+                    tags = EntityTag.Engine
+                });
+
+            break;
+            case EntityType.SHIP_ROOM_TURRET:
+
+                entities.Add(new Entity()
+                {
+                    id = Rand.IntPositive,
+                    entityType = EntityType.SHIP_TURRET,
+                    drawSize = Vector2.one,
+                    position = rect.center,
+                    sortingOrder = 1,
+                    parentId = roomId,
+                    tags = EntityTag.Turret
+                });
+
+                entities.Add(new Entity()
+                {
+                    entityType = EntityType.SHIP_TURRET_TOP,
+                    drawSize = Vector2.one,
+                    position = rect.center,
+                    sortingOrder = 2,
+                    parentId = roomId,
+                    tags = EntityTag.Shield,
+                    hitPoints = 100,
+                    shieldRadius = 8,
+                });
+
+            break;
+            case EntityType.SHIP_ROOM_SHIELD:
+
+                entities.Add(new Entity()
+                {
+                    entityType = EntityType.SHIP_SHIELD,
+                    drawSize = Vector2.one,
+                    position = rect.center,
+                    sortingOrder = 1,
+                    parentId = roomId,
+                    tags = EntityTag.Shield
+                });
+
+                entities.Add(new Entity()
+                {
+                    entityType = EntityType.SHIELD,
+                    drawSize = Vector2.one,
+                    position = rect.center,
+                    sortingOrder = 1,
+                    parentId = roomId,
+                    tags = EntityTag.Shield,
+                    hitPoints = 100,
+                    shieldRadius = 8,
+                    collisionType = CollisionType.CIRCLE,
+                    collisionRadius = 8,
+                    collisionLayer = CollisionLayer.Ship,   
+                    collideWithMask = CollisionLayer.Asteroid,
+                });
+
+            break;
+        }
+
+        return entities;
+    }
+
+    private static (int width, int height) RoomSize(EntityType type) => type switch
+    {
+        EntityType.SHIP_ROOM_SHIELD => (6, 6),
+        EntityType.SHIP_ROOM_TURRET => (8, 8),
+        EntityType.SHIP_ROOM_ENGINE => (6, 8),
+        _ => throw new NotImplementedException("Unknown room type " + type) 
+    };
+
+    private static EntityTag RoomTags(EntityType type) => type switch
+    {
+        EntityType.SHIP_ROOM_SHIELD => EntityTag.Room | EntityTag.Shield,
+        EntityType.SHIP_ROOM_TURRET => EntityTag.Room | EntityTag.Turret,
+        EntityType.SHIP_ROOM_ENGINE => EntityTag.Room | EntityTag.Engine,
+        _ => throw new NotImplementedException("Unknown room type " + type) 
+    };
+
+    public static Rect GetBestRoomRect(int shipId, EntityType roomType, Context context)
+    {
+        var (width, height) = RoomSize(roomType);
+
         float bestScore = 0f;
         Rect  bestRect = default;
 

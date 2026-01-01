@@ -5,6 +5,7 @@ public class Rand
     public static bool Bool => Chance(0.5f);
     public static float Value => Random.Range(0, 1f);
     public static int IntPositive => Random.Range(0, int.MaxValue);
+    public static int Int => Random.Range(int.MinValue, int.MaxValue);
 
     public static bool Chance(float chance)
     {

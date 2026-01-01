@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class Render
+public static class EntityRenderer
 {
     private static Material spriteMaterial;
     private static Material shieldMaterial;
@@ -171,5 +171,16 @@ public static class Render
         m.triangles = new[] { 0, 1, 2, 0, 2, 3 };
         m.RecalculateBounds();
         return m;
+    }
+
+    public static void Update(Context context)
+    {
+        if( !Find.Game.DrawEntities )
+            return;
+        
+        for(int i = context.entities.Count - 1; i >= 0; i--)
+        {
+            DrawEntity(context.entities[i]);    
+        }
     }
 }

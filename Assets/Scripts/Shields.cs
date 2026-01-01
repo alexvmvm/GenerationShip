@@ -10,7 +10,10 @@ public static class Shields
     private static readonly Vector2 Offset = new(0f, 20f);
 
     public static void OnGUI(in Context context)
-    {
+    {   
+        if( !Find.Game.DrawEntities )
+            return;
+
         for(int i = 0; i < context.entities.Count; i++)
         {
             if( context.entities[i].entityType != EntityType.SHIELD )

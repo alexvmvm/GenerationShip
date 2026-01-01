@@ -38,6 +38,9 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
+        // if( Find.Game.Mode == GameMode.Map )
+        //     return;
+
         HandlePan();
         HandleZoom();
         ClampToBounds();

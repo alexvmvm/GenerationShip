@@ -30,7 +30,8 @@ public struct InputEvent
 public enum GameMode
 {
     Playing,
-    ShipEditor
+    ShipEditor,
+    Map
 }
 
 public readonly struct Context
@@ -58,17 +59,28 @@ public class Game : MonoBehaviour
     private static int ticksGame;
     private int shipId;
     private GameMode gameMode = GameMode.Playing;
+    private int seed;
 
     //Props
     public static int TicksGame => ticksGame;
     private Context GameContext => new(entities, Camera.main.GetWorldRect());
     public GameMode Mode => gameMode;
+    public bool DrawEntities => gameMode != GameMode.Map;
+    public int Seed => seed;
+
+    void Awake()
+    {
+        seed = Rand.Int;
+    }
 
     void Start()
     {
         Entity ship = EntityMaker.MakeShip(6, 10, GameContext);
 
         shipId = ship.id;
+
+        // todo: 
+        Map.CreateMap();
     }
 
     void Update()
@@ -89,12 +101,12 @@ public class Game : MonoBehaviour
         }
 
         // Render / presentation (per-frame)
-        DrawEntities();
-
         Context context = GameContext;
 
         Collisions.Update(context);
         ShipEditor.Update(context);
+        EntityRenderer.Update(context);
+        Map.Update();
     }
 
     private readonly StringBuilder sb = new(1024);
@@ -118,9 +130,10 @@ public class Game : MonoBehaviour
 
         if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 2 * BtnHeight - 20, BtnWidth, BtnHeight), "Add turret") )
             ShipEditor.DoShipEditor(shipId, EntityType.SHIP_ROOM_TURRET, context);
+
+        if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 3 * BtnHeight - 30, BtnWidth, BtnHeight), "Map") )
+            Find.Game.SetMode(Find.Game.Mode == GameMode.Map ? GameMode.Playing : GameMode.Map);
     }
-
-
 
     void Tick()
     {
@@ -181,16 +194,9 @@ public class Game : MonoBehaviour
         }
     }
 
-    void DrawEntities()
-    {
-        for(int i = entities.Count - 1; i >= 0; i--)
-        {
-            Render.DrawEntity(entities[i]);    
-        }
-    }
-
     public void SetMode(GameMode mode)
     {
-        this.gameMode = mode;
+        if( this.gameMode != mode )
+            this.gameMode = mode;
     }
 }

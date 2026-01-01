@@ -7,7 +7,7 @@ public struct Node
 {
     public int id;
     public Vector2 position;
-    public int parent;
+    public List<int> parents;
 }
 
 public static class Map
@@ -82,7 +82,7 @@ public static class Map
 
                 var node = new Node();
                 node.id = Rand.IntPositive;
-                node.parent = -1; // linking later
+                node.parents = new();
                 node.position = new Vector2(
                     xOffset + lane * LaneGap,
                     yPosition + row * RowGap);
@@ -91,55 +91,82 @@ public static class Map
                 nodes.Add(node);
             }
         }
-
-        for(int lane = 0; lane < map.GetLength(0); lane++)
-        {
-            for(int row = 0; row < map.GetLength(1); row++)
-            {
-                if( row == map.GetLength(1) - 1 )
-                    break;
-                
-                if( map[lane, row] < 0 )
-                    continue;
-                
+        
+        for(int row = 0; row < map.GetLength(1) - 1; row++)
+        {            
+            // look for the best parent nodes
+            for(int lane = 0; lane < map.GetLength(0); lane++)
+            {                
                 int idx = map[lane, row];
+                if( idx < 0 )
+                    continue;
 
-                int parentId = FindBestParent(map, row, idx);
+                int parentId = FindClosestNodeOnRow(map, row+1, idx);
                 if( parentId < 0 )
                     continue;
 
                 int index = IndexOf(idx);
                 Node n = nodes[index];
-                n.parent = parentId;
+                n.parents.Add(parentId);
+                nodes[index] = n;
+            }
+
+            // check if any are not connected
+            for(int lane = 0; lane < map.GetLength(0); lane++)
+            {
+                int parentId = map[lane, row+1];
+                if( parentId < 0 )
+                    continue;
+                
+                bool hasChild = false;
+                for(int l = 0; l < map.GetLength(0); l++)
+                {
+                    int id = map[l, row];
+                    if( id < 0 )
+                        continue;
+                    
+                    int childIndex = IndexOf(id);
+                    if( nodes[childIndex].parents.Contains(parentId) )
+                    {
+                        hasChild = true;
+                        break;
+                    }
+                }
+
+                if( hasChild )
+                    continue;
+                
+                int childId = FindClosestNodeOnRow(map, row, parentId);
+                if( childId < 0 )
+                    continue;
+                
+                int index = IndexOf(childId);
+                Node n = nodes[index];
+                n.parents.Add(parentId);
                 nodes[index] = n;
             }
         }
-
-        //TODO: find paths
-
     }
 
-    private static int FindBestParent(int[,] map, int row, int rootIndex)
+    private static int FindClosestNodeOnRow(int[,] map, int row, int rootId)
     {
         int bestIndex = -1;
         float bestDistance = float.MaxValue;
-        Vector2 root = nodes[IndexOf(rootIndex)].position;
-
-        for(int aboveRow = row + 1; aboveRow < map.GetLength(1); aboveRow++)
+        Vector2 root = nodes[IndexOf(rootId)].position;
+    
+        for(int l = 0; l < map.GetLength(0); l++)
         {
-            for(int l = 0; l < map.GetLength(1); l++)
+            int id = map[l, row];
+            if( id < 0 )
+                continue;
+
+            int index = IndexOf(id);
+
+            var distance = Vector2.Distance(root, nodes[index].position);
+            if( distance < bestDistance )
             {
-                if( map[l, aboveRow] < 0 )
-                    continue;
-
-                int index = IndexOf(map[l, aboveRow]);
-
-                var distance = Vector2.Distance(root, nodes[index].position);
-                if( distance < bestDistance )
-                {
-                    bestDistance = distance;
-                    bestIndex = map[l, aboveRow];
-                }
+                bestDistance = distance;
+                bestIndex = map[l, row];
             }
         }
 
@@ -229,28 +256,17 @@ public static class Map
         for (int i = 0; i < nodes.Count; i++)
         {
             var n = nodes[i];
-            if (n.parent < 0) 
+            if (n.parents.NullOrEmpty()) 
                 continue;
-
-            // Find parent position
-            Vector2 parentPos = default;
-            bool found = false;
 
             for (int j = 0; j < nodes.Count; j++)
             {
-                if (nodes[j].id == n.parent)
-                {
-                    parentPos = nodes[j].position;
-                    found = true;
-                    break;
+                if (n.parents.Contains(nodes[j].id))
+                {                    
+                    // your quad-line renderer from earlier
+                    DrawLink(cam, nodes[j].position, n.position, width: 0.1f, color: new Color(1, 1, 1, 0.6f), z: 0f);
                 }
-            }
-
-            if (!found) 
-                continue;
-
-            // your quad-line renderer from earlier
-            DrawLink(cam, parentPos, n.position, width: 0.1f, color: new Color(1, 1, 1, 0.6f), z: 0f);
+            }            
         }
     }
 

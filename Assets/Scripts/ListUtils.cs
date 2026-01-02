@@ -11,6 +11,11 @@ public static class ListUtils
         return list == null || list.Count() == 0;
     }
 
+    public static bool NotNullAndContains<T>(this IEnumerable<T> list, T item)
+    {
+        return list != null && list.Count() > 0 && list.Contains(item);
+    }
+
     public static IEnumerable<T> InRandomOrder<T>(this IEnumerable<T> source)
     {
         return source.OrderBy<T, int>((item) => UnityEngine.Random.Range(int.MinValue, int.MaxValue));

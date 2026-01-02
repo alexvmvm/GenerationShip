@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -12,21 +13,10 @@ public struct Node
 
 public static class Map
 {
-    // Config
-    public static string BackgroundSpritePath = "Textures/map-background"; // set to your sprite path
-    public static float Overscan = 1.05f; // >1 so it slightly exceeds edges
-
-    public static Vector2 BackgroundCenter = Vector2.zero;
-    public static float BackgroundWorldHeight = 60f;
-
     // Cached
-    private static Material mat;
-    private static Material dotMat;
-    private static Material lineMat;
-    private static Mesh lineQuad;
-    private static Mesh quad;
-    private static readonly MaterialPropertyBlock mpb = new();
-    private static List<Node> nodes = new();
+    private static int lastNodeId = -1;
+    private static readonly List<Node> nodes = new();
+    private static readonly List<int> availableNodes = new();
 
     public static void CreateMap()
     {
@@ -184,152 +174,70 @@ public static class Map
         return -1;
     }
 
-    private static void DrawBackground(Camera cam)
+    private static void CalculateAvailableNodes()
     {
-        if (cam == null)
-            return;
+        availableNodes.Clear();
 
-        if (mat == null)
+        static bool CanUseNode(Node node)
         {
-            // Unlit color is simplest for a solid black quad
-            mat = new Material(Shader.Find("Unlit/Color"));
-            mat.renderQueue = 2900;
-        }
-        if (quad == null)
-            quad = BuildQuad();
+            // check if this node is a parent of the current node 
+            // if we are at a node
+            if( lastNodeId >= 0 )
+            {
+                Node lastNode = nodes[IndexOf(lastNodeId)];
+                return lastNode.parents.NotNullAndContains(node.id);
+            }
+                
+            // check if this node is a root node since we
+            // haven't picked a node yet
+            for(int i = 0; i < nodes.Count; i++)
+            {
+                if( nodes[i].id == node.id )
+                    continue;
+                
+                // not a root node since there is a child node
+                if( nodes[i].parents.NotNullAndContains(node.id) )
+                    return false;
+            }
 
-        // Fixed world size, but ensure it still covers the camera view.
-        float h = Mathf.Max(0.01f, BackgroundWorldHeight) * Overscan;
-        float w = h; // square by default (no texture aspect to preserve)
-
-        if (cam.orthographic)
-        {
-            float viewH = cam.orthographicSize * 2f;
-            float viewW = viewH * cam.aspect;
-
-            if (h < viewH * Overscan) h = viewH * Overscan;
-            if (w < viewW * Overscan) w = viewW * Overscan;
-        }
-
-        float z = 0f;
-        var pos = new Vector3(BackgroundCenter.x, BackgroundCenter.y, z);
-        var mtx = Matrix4x4.TRS(pos, Quaternion.identity, new Vector3(w, h, 1f));
-
-        mpb.Clear();
-        mpb.SetColor("_Color", Color.black);
-
-        Graphics.DrawMesh(quad, mtx, mat, 0, cam, 0, mpb);
-    }
-
-    private static void DrawNodes(Camera camera)
-    {
-        if (dotMat == null)
-        {
-            dotMat = new Material(Shader.Find("Sprites/Default"));
-            dotMat.renderQueue = 2910; // slightly above background
+            return true;
         }
 
-        if (quad == null) 
-            quad = BuildQuad();
-
-        mpb.Clear();
-        mpb.SetTexture("_MainTex", Texture2D.whiteTexture);
-        mpb.SetTexture("_BaseMap", Texture2D.whiteTexture);
-        
         for(int i = 0; i < nodes.Count; i++)
         {
-            var d = nodes[i];
-
-            var mtx = Matrix4x4.TRS(d.position, Quaternion.identity, new Vector3(1f, 1f, 1f));
-
-            Color c = Color.yellow;
-
-            mpb.SetColor("_Color", c);
-            mpb.SetColor("_BaseColor", c);
-
-            Graphics.DrawMesh(quad, mtx, dotMat, 0, camera, 0, mpb);
+            if( CanUseNode(nodes[i]) )
+                availableNodes.Add(nodes[i].id);
         }
-    }
-
-    public static void DrawLinks(Camera cam)
-    {
-        for (int i = 0; i < nodes.Count; i++)
-        {
-            var n = nodes[i];
-            if (n.parents.NullOrEmpty()) 
-                continue;
-
-            for (int j = 0; j < nodes.Count; j++)
-            {
-                if (n.parents.Contains(nodes[j].id))
-                {                    
-                    // your quad-line renderer from earlier
-                    DrawLink(cam, nodes[j].position, n.position, width: 0.1f, color: new Color(1, 1, 1, 0.6f), z: 0f);
-                }
-            }            
-        }
-    }
-
-    private static void DrawLink(Camera cam, Vector2 a, Vector2 b, float width, Color color, float z = 0f)
-    {
-        if (cam == null) return;
-
-        if (lineMat == null)
-        {
-            lineMat = new Material(Shader.Find("Sprites/Default"));
-            lineMat.renderQueue = 2905; // above background/dots, below nodes (tweak as needed)
-        }
-
-        if (lineQuad == null)
-            lineQuad = BuildQuad(); // reuse your existing quad builder
-
-        Vector2 d = b - a;
-        float len = d.magnitude;
-        if (len <= 1e-5f) return;
-
-        float angle = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-        Vector2 mid = (a + b) * 0.5f;
-
-        var mtx = Matrix4x4.TRS(
-            new Vector3(mid.x, mid.y, z),
-            Quaternion.Euler(0f, 0f, angle),
-            new Vector3(len, width, 1f));
-
-        mpb.Clear();
-        mpb.SetColor("_Color", color);
-
-        Graphics.DrawMesh(lineQuad, mtx, lineMat, 0, cam, 0, mpb);
-    }
-
-    private static Mesh BuildQuad()
-    {
-        var m = new Mesh { name = "MapQuad" };
-        m.vertices = new[]
-        {
-            new Vector3(-0.5f, -0.5f, 0),
-            new Vector3( 0.5f, -0.5f, 0),
-            new Vector3( 0.5f,  0.5f, 0),
-            new Vector3(-0.5f,  0.5f, 0),
-        };
-        m.uv = new[]
-        {
-            new Vector2(0,0),
-            new Vector2(1,0),
-            new Vector2(1,1),
-            new Vector2(0,1),
-        };
-        m.triangles = new[] { 0, 1, 2, 0, 2, 3 };
-        m.RecalculateBounds();
-        return m;
     }
 
     public static void Update()
     {
         if( Find.Game.Mode != GameMode.Map )
             return;
+
+        CalculateAvailableNodes();
         
-        DrawBackground(Camera.main);
-        DrawNodes(Camera.main);
-        DrawLinks(Camera.main);
+        MapUtils.DrawBackground(Camera.main);
+        MapUtils.DrawNodes(nodes, n => availableNodes.Contains(n));
+        MapUtils.DrawLinks(nodes);
+
+        Vector2 mousePosWorld = Input.mousePosition.ScreenToWorld();
+
+        for(int i = 0; i < availableNodes.Count; i++)
+        {
+            int idx = IndexOf(availableNodes[i]);
+            Node node = nodes[idx];
+
+            if( Vector2.Distance(node.position, mousePosWorld) < 1 )
+            {
+                MapUtils.DrawCircle(node.position, 1f, 0.1f, Color.yellow);
+
+                if( Input.GetKeyDown(KeyCode.Mouse0) )
+                {
+                    lastNodeId = node.id;
+                }
+            }
+                
+        }
     }
 }

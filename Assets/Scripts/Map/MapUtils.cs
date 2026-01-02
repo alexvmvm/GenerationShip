@@ -16,7 +16,7 @@ public static class MapUtils
     private static Mesh quad;
     private static readonly MaterialPropertyBlock mpb = new();
 
-    public static void DrawNodes(List<Node> nodes, Func<int, bool> highlight)
+    public static void DrawNodes(List<Node> nodes, Func<int, bool> isAvailable)
     {
         if (nodeMat == null)
         {
@@ -37,7 +37,7 @@ public static class MapUtils
 
             var mtx = Matrix4x4.TRS(d.position, Quaternion.identity, new Vector3(1f, 1f, 1f));
 
-            Color c = highlight(d.id) ? Color.yellow : Color.white;
+            Color c = isAvailable(d.id) ? Color.yellow : Color.white;
 
             mpb.SetColor("_Color", c);
             mpb.SetColor("_BaseColor", c);
@@ -46,22 +46,21 @@ public static class MapUtils
         }
     }
 
-    public static void DrawLinks(List<Node> nodes)
+    public static void DrawLinks(List<Node> nodes, List<Link> links)
     {
+        // build id->pos once
+        var posById = new Dictionary<int, Vector2>(nodes.Count);
         for (int i = 0; i < nodes.Count; i++)
-        {
-            var n = nodes[i];
-            if (n.parents.NullOrEmpty()) 
-                continue;
+            posById[nodes[i].id] = nodes[i].position;
 
-            for (int j = 0; j < nodes.Count; j++)
-            {
-                if (n.parents.Contains(nodes[j].id))
-                {                    
-                    // your quad-line renderer from earlier
-                    DrawLink(nodes[j].position, n.position, width: 0.1f, color: new Color(1, 1, 1, 0.6f), z: 0f);
-                }
-            }            
+        for (int i = 0; i < links.Count; i++)
+        {
+            var link = links[i];
+            if (!posById.TryGetValue(link.childId, out var childPos)) continue;
+            if (!posById.TryGetValue(link.parentId, out var parentPos)) continue;
+
+            // draw parent->child or child->parent, whichever you prefer
+            DrawLink(parentPos, childPos, 0.1f, new Color(1,1,1,0.6f), 0f);
         }
     }
 

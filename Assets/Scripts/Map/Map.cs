@@ -13,12 +13,21 @@ public struct Link
 {
     public int childId;
     public int parentId;
+    public LinkType type;
 
-    public Link(int childId, int parentId)
+    public Link(int childId, int parentId, LinkType type)
     {
         this.childId = childId;
         this.parentId = parentId;
+        this.type = type;
     }
+}
+
+public enum LinkType
+{
+    None,
+    AsteroidBelt,
+    Pirates
 }
 
 public static class Map
@@ -144,7 +153,7 @@ public static class Map
             if (links[i].childId == childId && links[i].parentId == parentId)
                 return;
         }
-        links.Add(new Link(childId, parentId));
+        links.Add(new Link(childId, parentId, LinkType.AsteroidBelt));
     }
 
     private static bool HasLink(int childId, int parentId)

@@ -12,6 +12,7 @@ public static class MapUtils
     private static Material nodeMat;
     private static Material backgroundMat;
     private static Material ringMat;
+    private static Material iconMat; // cache
     private static Mesh lineQuad;
     private static Mesh quad;
     private static readonly MaterialPropertyBlock mpb = new();
@@ -56,24 +57,36 @@ public static class MapUtils
         for (int i = 0; i < links.Count; i++)
         {
             var link = links[i];
-            if (!posById.TryGetValue(link.childId, out var childPos)) continue;
-            if (!posById.TryGetValue(link.parentId, out var parentPos)) continue;
+            
+            if (!posById.TryGetValue(link.childId, out var childPos)) 
+                continue;
+            
+            if (!posById.TryGetValue(link.parentId, out var parentPos)) 
+                continue;
 
-            // draw parent->child or child->parent, whichever you prefer
-            DrawLink(parentPos, childPos, 0.1f, new Color(1,1,1,0.6f), 0f);
+            Texture icon = GetTexture(link.type);
+
+            DrawLink(parentPos, childPos, 0.1f, new Color(1,1,1,0.6f), 0f, icon: icon);
         }
     }
 
-    private static void DrawLink(Vector2 a, Vector2 b, float width, Color color, float z = 0f)
+    private static Texture GetTexture(LinkType type) => type switch
+    {
+        LinkType.AsteroidBelt   => ResourceCache.Texture("Textures/asteroid-icon"),
+        LinkType.Pirates        => ResourceCache.Texture("Textures/pirate-icon"),
+        _                       => null,
+    };
+
+    private static void DrawLink(Vector2 a, Vector2 b, float width, Color color, float z = 0f, Texture icon = null)
     {
         if (lineMat == null)
         {
             lineMat = new Material(Shader.Find("Sprites/Default"));
-            lineMat.renderQueue = 2905; // above background/dots, below nodes (tweak as needed)
+            lineMat.renderQueue = 2905; // above background/dots, below nodes
         }
 
         if (lineQuad == null)
-            lineQuad = BuildQuad(); // reuse your existing quad builder
+            lineQuad = BuildQuad();
 
         Vector2 d = b - a;
         float len = d.magnitude;
@@ -82,15 +95,40 @@ public static class MapUtils
         float angle = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
         Vector2 mid = (a + b) * 0.5f;
 
-        var mtx = Matrix4x4.TRS(
+        // --- link quad ---
+        var linkMtx = Matrix4x4.TRS(
             new Vector3(mid.x, mid.y, z),
             Quaternion.Euler(0f, 0f, angle),
             new Vector3(len, width, 1f));
 
         mpb.Clear();
         mpb.SetColor("_Color", color);
+        Graphics.DrawMesh(lineQuad, linkMtx, lineMat, 0, Camera.main, 0, mpb);
 
-        Graphics.DrawMesh(lineQuad, mtx, lineMat, 0, Camera.main, 0, mpb);
+        // --- optional icon in the middle ---
+        if (icon == null)
+            return;
+
+        if (iconMat == null)
+        {
+            iconMat = new Material(Shader.Find("Sprites/Default"));
+            iconMat.renderQueue = 2907; // above links, below nodes (tweak)
+        }
+
+        // pick whatever size you want for the icon in world units
+        const float iconSize = 0.9f;
+
+        var iconMtx = Matrix4x4.TRS(
+            new Vector3(mid.x, mid.y, z),
+            Quaternion.identity,                 // keep upright
+            new Vector3(iconSize, iconSize, 1f));
+
+        mpb.Clear();
+        mpb.SetTexture("_MainTex", icon);
+        mpb.SetTexture("_BaseMap", icon);        // harmless for Sprites/Default, keeps compatibility
+        mpb.SetColor("_Color", Color.white);
+
+        Graphics.DrawMesh(lineQuad, iconMtx, iconMat, 0, Camera.main, 0, mpb);
     }
 
     public static void DrawBackground(Camera cam)

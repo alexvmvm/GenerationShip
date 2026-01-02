@@ -6,6 +6,9 @@ public static class Asteroids
 {
     public static void Tick(Context context)
     {
+        if( !context.isMoving )
+            return;
+
         Rect rect = CameraUtils.GetWorldRect(Camera.main);
 
         if( Rand.Chance(0.1f) )

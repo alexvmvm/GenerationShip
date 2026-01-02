@@ -33,12 +33,11 @@ public enum LinkType
 public static class Map
 {
     // Cached
-    private static int lastNodeId = -1;
+    public static int lastNodeId = -1;
+    public static int targetNodeId = -1;
     private static readonly List<Node> nodes = new();
     private static readonly List<Link> links = new();
     private static readonly List<int> availableNodes = new();
-
-    // Optional: faster lookup than IndexOf scanning each time
     private static readonly Dictionary<int, int> nodeIndexById = new();
 
     public static void CreateMap()
@@ -79,7 +78,7 @@ public static class Map
         // --- Create nodes ---
         for (int row = 0; row < rows; row++)
         {
-            int nodeCountThisRow = Math.Max(1, Rand.Range(requiredLanes - 1, requiredLanes + 1));
+            int nodeCountThisRow = row == 0 ? 1 : Math.Max(1, Rand.Range(requiredLanes - 1, requiredLanes + 1));
 
             laneIndexes.Clear();
             while (laneIndexes.Count < nodeCountThisRow)
@@ -104,6 +103,9 @@ public static class Map
 
                 nodeIndexById[node.id] = nodes.Count;
                 nodes.Add(node);
+
+                if( row == 0 && lastNodeId < 0 )
+                    lastNodeId = node.id;
             }
         }
 
@@ -291,7 +293,8 @@ public static class Map
         for (int i = 0; i < availableNodes.Count; i++)
         {
             int idx = IndexOf(availableNodes[i]);
-            if (idx < 0) continue;
+            if (idx < 0) 
+                continue;
 
             Node node = nodes[idx];
 
@@ -302,6 +305,7 @@ public static class Map
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
                     lastNodeId = node.id;
+                    Run.Init(lastNodeId);
                 }
             }
         }

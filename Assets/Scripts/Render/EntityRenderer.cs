@@ -11,7 +11,7 @@ public static class EntityRenderer
 
     private static readonly MaterialPropertyBlock mpb = new();
 
-    public static void DrawEntity(Entity e)
+    public static void DrawEntity(Entity e, Context context)
     {
         switch(e.entityType)
         {
@@ -24,7 +24,7 @@ public static class EntityRenderer
         }
 
         // draw extra stuff
-        DrawEntity_Extra(e);
+        DrawEntity_Extra(e, context);
     }
 
     private static void DrawEntity_Sprite(Entity e)
@@ -140,12 +140,12 @@ public static class EntityRenderer
         Graphics.DrawMesh(shieldQuad, matrix, shieldMaterial, 0, null, 0, mpb);
     }
 
-    private static void DrawEntity_Extra(Entity e)
+    private static void DrawEntity_Extra(Entity e, Context context)
     {
         switch(e.entityType)
         {
             case EntityType.SHIP_ENGINE:
-                if( !e.cleanup && !e.cleanupIfNotVisible )
+                if( !e.cleanup && !e.cleanupIfNotVisible && context.isMoving )
                     ThrusterRenderer.DrawThruster(e.position, e.rotation, e.sortingOrder + 1);
             break;
         }
@@ -180,7 +180,7 @@ public static class EntityRenderer
         
         for(int i = context.entities.Count - 1; i >= 0; i--)
         {
-            DrawEntity(context.entities[i]);    
+            DrawEntity(context.entities[i], context);    
         }
     }
 }

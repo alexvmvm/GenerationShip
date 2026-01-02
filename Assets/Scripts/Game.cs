@@ -38,11 +38,13 @@ public readonly struct Context
 {
     public readonly List<Entity> entities;
     public readonly Rect worldScreenRect;
+    public readonly bool isMoving;
 
-    public Context(List<Entity> entities, Rect worldScreenRect)
+    public Context(List<Entity> entities, Rect worldScreenRect, bool isMoving = false)
     {
         this.entities = entities;
         this.worldScreenRect = worldScreenRect;
+        this.isMoving = isMoving;
     }
 }
 
@@ -63,10 +65,11 @@ public class Game : MonoBehaviour
 
     //Props
     public static int TicksGame => ticksGame;
-    private Context GameContext => new(entities, Camera.main.GetWorldRect());
+    private Context Context => new(entities, Camera.main.GetWorldRect(), Run.targetNodeId >= 0);
     public GameMode Mode => gameMode;
-    public bool DrawEntities => gameMode != GameMode.Map;
+    public bool DrawEntities => Mode != GameMode.Map;
     public int Seed => seed;
+    public bool Ticking => Mode == GameMode.Playing;
 
     void Awake()
     {
@@ -75,11 +78,9 @@ public class Game : MonoBehaviour
 
     void Start()
     {
-        Entity ship = EntityMaker.MakeShip(6, 10, GameContext);
-
+        Entity ship = EntityMaker.MakeShip(6, 10, Context);
         shipId = ship.id;
 
-        // todo: 
         Map.CreateMap();
     }
 
@@ -89,7 +90,7 @@ public class Game : MonoBehaviour
         GatherInput();
 
         // Run deterministic ticks at 60hz
-        if( gameMode == GameMode.Playing)
+        if( Ticking )
         {
             tickAcc += Time.deltaTime;
             while (tickAcc >= TICK_DT)
@@ -101,7 +102,7 @@ public class Game : MonoBehaviour
         }
 
         // Render / presentation (per-frame)
-        Context context = GameContext;
+        Context context = Context;
 
         Collisions.Update(context);
         ShipEditor.Update(context);
@@ -117,7 +118,7 @@ public class Game : MonoBehaviour
 
         GUI.Label(new Rect(10, 10, 600, 400), sb.ToString());
 
-        Context context = GameContext;
+        Context context = Context;
 
         GameUI.OnGUI(context);
         Shields.OnGUI(in context);
@@ -140,7 +141,7 @@ public class Game : MonoBehaviour
         CleanupEntities();
         ConsumeInput();
 
-        var context = GameContext;
+        var context = Context;
         
         Damage.Tick(context);
         Movement.Tick(context);
@@ -149,6 +150,7 @@ public class Game : MonoBehaviour
         BackgroupEffects.Tick(context);
         Shields.Tick(context);
         Turrets.Tick(context);
+        Run.Tick(context);
     }
 
     void GatherInput()

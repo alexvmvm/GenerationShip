@@ -6,6 +6,9 @@ public static class Turrets
 {
     public static void Tick(Context context)
     {
+        if( !context.isMoving )
+            return;
+
         for(int i = 0; i < context.entities.Count; i++)
         {
             if( context.entities[i].entityType != EntityType.SHIP_TURRET_TOP )

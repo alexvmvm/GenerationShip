@@ -34,8 +34,7 @@ public static class Map
 {
     // Cached
     public static int lastNodeId = -1;
-    public static int targetNodeId = -1;
-    private static readonly List<Node> nodes = new();
+    public static readonly List<Node> nodes = new();
     private static readonly List<Link> links = new();
     private static readonly List<int> availableNodes = new();
     private static readonly Dictionary<int, int> nodeIndexById = new();
@@ -273,6 +272,25 @@ public static class Map
         }
     }
 
+    private static bool TryGetShipPosition(out Vector2 vector, out float rotation)
+    {
+        vector = default;
+        rotation= default;
+        
+        if( lastNodeId < 0 )
+            return false;
+
+        vector = nodes[IndexOf(lastNodeId)].position;
+
+        if( Run.targetNodeId < 0 )
+            return true;
+        
+        Vector2 end = nodes[IndexOf(Run.targetNodeId)].position;
+        vector = Vector2.Lerp(vector, end, Run.RunPercentComplete);
+        rotation = Vector2.SignedAngle(Vector2.up, end - vector);
+        return true;
+    }
+
     public static void Update()
     {
         if (Find.Game.Mode != GameMode.Map)
@@ -281,12 +299,11 @@ public static class Map
         CalculateAvailableNodes();
 
         MapUtils.DrawBackground(Camera.main);
-
-        // draw nodes: predicate expects an id
         MapUtils.DrawNodes(nodes, nodeId => availableNodes.Contains(nodeId));
-
-        // updated: draw links from list
         MapUtils.DrawLinks(nodes, links);
+
+        if( TryGetShipPosition(out Vector2 shipPos, out float rotation) )
+            MapUtils.DrawShip(shipPos, rotation);
 
         Vector2 mousePosWorld = Input.mousePosition.ScreenToWorld();
 
@@ -303,10 +320,7 @@ public static class Map
                 MapUtils.DrawCircle(node.position, 1f, 0.1f, Color.yellow);
 
                 if (Input.GetKeyDown(KeyCode.Mouse0))
-                {
-                    lastNodeId = node.id;
-                    Run.Init(lastNodeId);
-                }
+                    Run.Init(node.id, Game.TicksPerRealSecond * 10);
             }
         }
     }

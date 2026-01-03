@@ -47,6 +47,30 @@ public static class MapUtils
         }
     }
 
+    public static void DrawShip(Vector2 position, float rotation)
+    {
+        if (nodeMat == null)
+        {
+            nodeMat = new Material(Shader.Find("Sprites/Default"));
+            nodeMat.renderQueue = 2915; // slightly above background
+        }
+
+        if (quad == null) 
+            quad = BuildQuad();
+
+        mpb.Clear();
+        mpb.SetTexture("_MainTex", ResourceCache.Texture("Textures/ship-icon"));
+        mpb.SetTexture("_BaseMap", Texture2D.whiteTexture);
+        
+
+        var mtx = Matrix4x4.TRS(position, Quaternion.Euler(0, 0, rotation), new Vector3(1.5f, 1.5f, 1.5f));
+
+        mpb.SetColor("_Color", Color.cyan);
+        mpb.SetColor("_BaseColor", Color.cyan);
+
+        Graphics.DrawMesh(quad, mtx, nodeMat, 0, Camera.main, 0, mpb);
+    }
+
     public static void DrawLinks(List<Node> nodes, List<Link> links)
     {
         // build id->pos once

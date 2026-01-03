@@ -5,14 +5,30 @@ using UnityEngine;
 public static class Run
 {
     public static int targetNodeId = -1;
+    public static int runDurationTicks = -1;
+    private static int runTicks = 0;
 
-    public static void Init(int targetId)
+    //Props
+    public static float RunPercentComplete => runTicks / (float)runDurationTicks;
+
+    public static void Init(int targetId, int durationTicks)
     {
         targetNodeId = targetId;
+        runDurationTicks = durationTicks;
+        runTicks = 0;
     }
 
     public static void Tick(Context context)
     {
+        if( context.targetNodeId < 0 || runTicks >= runDurationTicks )
+            return;
+
+        runTicks++;
         
+        if( runTicks >= runDurationTicks )
+        {
+            Map.lastNodeId = context.targetNodeId;
+            targetNodeId = -1;
+        }
     }
 }

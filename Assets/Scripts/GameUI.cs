@@ -16,6 +16,22 @@ public static class GameUI
         //         break;
         //     }
         // }
+
+        if( !context.isMoving && Find.Game.Mode == GameMode.Playing )
+        {
+            const float Width = 300;
+            const float Height = 150;
+
+            var rect = new Rect(
+                Screen.width/2f - Width/2f, 
+                Screen.height - Height - UI.Gap, 
+                Width, Height);
+            
+            if( UI.Button(rect, "Choose destination") )
+            {
+                Find.Game.SetMode(GameMode.Map);
+            }
+        }
     }
 
     // private static void DrawRoomUI(in Entity room)

@@ -33,7 +33,6 @@ public enum LinkType
 public static class Map
 {
     // Cached
-    public static int lastNodeId = -1;
     public static readonly List<Node> nodes = new();
     private static readonly List<Link> links = new();
     private static readonly List<int> availableNodes = new();
@@ -103,8 +102,8 @@ public static class Map
                 nodeIndexById[node.id] = nodes.Count;
                 nodes.Add(node);
 
-                if( row == 0 && lastNodeId < 0 )
-                    lastNodeId = node.id;
+                if( row == 0 && Run.LastNodeId < 0 )
+                    Run.SetLastNodeId(node.id);
             }
         }
 
@@ -256,10 +255,10 @@ public static class Map
             int nodeId = nodes[i].id;
 
             bool canUse;
-            if (lastNodeId >= 0)
+            if (Run.LastNodeId >= 0)
             {
                 // Can use if nodeId is a parent of lastNodeId
-                canUse = IsParentOf(nodeId, lastNodeId);
+                canUse = IsParentOf(nodeId, Run.LastNodeId);
             }
             else
             {
@@ -277,10 +276,10 @@ public static class Map
         vector = default;
         rotation= default;
         
-        if( lastNodeId < 0 )
+        if( Run.LastNodeId < 0 )
             return false;
 
-        vector = nodes[IndexOf(lastNodeId)].position;
+        vector = nodes[IndexOf(Run.LastNodeId)].position;
 
         if( Run.targetNodeId < 0 )
             return true;
@@ -291,7 +290,7 @@ public static class Map
         return true;
     }
 
-    public static void Update()
+    public static void Update(Context context)
     {
         if (Find.Game.Mode != GameMode.Map)
             return;
@@ -299,12 +298,37 @@ public static class Map
         CalculateAvailableNodes();
 
         MapUtils.DrawBackground(Camera.main);
-        MapUtils.DrawNodes(nodes, nodeId => availableNodes.Contains(nodeId));
-        MapUtils.DrawLinks(nodes, links);
+        MapUtils.DrawNodes(nodes, nodeId => GetNodeColor(context, nodeId));
+        MapUtils.DrawLinks(nodes, links, link => GetLinkColor(context, link));
 
         if( TryGetShipPosition(out Vector2 shipPos, out float rotation) )
             MapUtils.DrawShip(shipPos, rotation);
+        
+        if( !context.isMoving )
+            DoStationaryMapUI(context);
+    }
 
+    private static Color GetNodeColor(Context context, int nodeId)
+    {
+        if( Run.VisitedNode(nodeId) )
+            return Color.green;
+
+        if( !context.isMoving && availableNodes.Contains(nodeId) )
+            return Color.yellow;
+        
+        return Color.white;
+    }
+
+    private static Color GetLinkColor(Context context, Link link)
+    {
+        if( Run.VisitedNode(link.childId) && Run.VisitedNode(link.parentId) )
+            return Color.green;
+        
+        return Color.white;
+    }
+
+    private static void DoStationaryMapUI(Context context)
+    {
         Vector2 mousePosWorld = Input.mousePosition.ScreenToWorld();
 
         for (int i = 0; i < availableNodes.Count; i++)
@@ -320,7 +344,10 @@ public static class Map
                 MapUtils.DrawCircle(node.position, 1f, 0.1f, Color.yellow);
 
                 if (Input.GetKeyDown(KeyCode.Mouse0))
+                {
                     Run.Init(node.id, Game.TicksPerRealSecond * 10);
+                    Find.Game.SetMode(GameMode.Playing);
+                }
             }
         }
     }

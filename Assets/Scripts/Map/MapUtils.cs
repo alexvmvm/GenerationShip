@@ -17,7 +17,7 @@ public static class MapUtils
     private static Mesh quad;
     private static readonly MaterialPropertyBlock mpb = new();
 
-    public static void DrawNodes(List<Node> nodes, Func<int, bool> isAvailable)
+    public static void DrawNodes(List<Node> nodes, Func<int, Color?> getNodeColor = null)
     {
         if (nodeMat == null)
         {
@@ -38,7 +38,7 @@ public static class MapUtils
 
             var mtx = Matrix4x4.TRS(d.position, Quaternion.identity, new Vector3(1f, 1f, 1f));
 
-            Color c = isAvailable(d.id) ? Color.yellow : Color.white;
+            Color c = getNodeColor != null && getNodeColor(d.id) is Color color ? color : Color.white;
 
             mpb.SetColor("_Color", c);
             mpb.SetColor("_BaseColor", c);
@@ -52,7 +52,7 @@ public static class MapUtils
         if (nodeMat == null)
         {
             nodeMat = new Material(Shader.Find("Sprites/Default"));
-            nodeMat.renderQueue = 2915; // slightly above background
+            nodeMat.renderQueue = 29200; // slightly above background
         }
 
         if (quad == null) 
@@ -71,7 +71,7 @@ public static class MapUtils
         Graphics.DrawMesh(quad, mtx, nodeMat, 0, Camera.main, 0, mpb);
     }
 
-    public static void DrawLinks(List<Node> nodes, List<Link> links)
+    public static void DrawLinks(List<Node> nodes, List<Link> links, Func<Link, Color?> getLinkColor = null)
     {
         // build id->pos once
         var posById = new Dictionary<int, Vector2>(nodes.Count);
@@ -90,7 +90,7 @@ public static class MapUtils
 
             Texture icon = GetTexture(link.type);
 
-            DrawLink(parentPos, childPos, 0.1f, new Color(1,1,1,0.6f), 0f, icon: icon);
+            DrawLink(parentPos, childPos, 0.1f, getLinkColor(link) ?? new Color(1,1,1,0.6f), 0f, icon: icon);
         }
     }
 

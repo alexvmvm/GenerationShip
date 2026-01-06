@@ -8,6 +8,11 @@ using UnityEngine;
 public static class UI
 {
     // ---------------------------
+    // Const
+    // ---------------------------
+    public const int Gap = 2;
+
+    // ---------------------------
     // Config
     // ---------------------------
 

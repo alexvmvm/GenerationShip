@@ -111,7 +111,7 @@ public class Game : MonoBehaviour
         Collisions.Update(context);
         ShipEditor.Update(context);
         EntityRenderer.Update(context);
-        Map.Update();
+        Map.Update(context);
     }
 
     private readonly StringBuilder sb = new(1024);

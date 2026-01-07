@@ -7,7 +7,6 @@ public static class Collisions
 {
     public static void Tick(Context context)
     {
-        // Update positions
         for(int i = 0; i < context.entities.Count; i++)
         {
             Entity a = context.entities[i];
@@ -26,7 +25,7 @@ public static class Collisions
 
                 Entity b = context.entities[j];
 
-                if( !ShouldCollide(a, b) )
+                if( !ShouldCollide(a, b, context) )
                     continue;
 
                 if( !Collides(a, b) )
@@ -41,13 +40,17 @@ public static class Collisions
         }
     }
 
-    private static bool ShouldCollide(in Entity a, in Entity b)
+    private static bool ShouldCollide(in Entity a, in Entity b, Context context)
     {
         if(!((a.collideWithMask & b.collisionLayer) != 0) || !((b.collideWithMask & a.collisionLayer) != 0))
             return false;
 
         // shield has no charge
         if((a.entityType == EntityType.SHIELD && a.hitPoints <= 0) || (b.entityType == EntityType.SHIELD && b.hitPoints <= 0))
+            return false;
+
+        // ship is not moving so no collisions
+        if( !context.isMoving && (a.tags.HasAny(EntityTag.Room) || b.tags.HasAny(EntityTag.Room)) )
             return false;
 
         return true;

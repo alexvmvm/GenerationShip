@@ -23,9 +23,9 @@ public static class GameUI
                 DoGameOver();
             else if( !context.isMoving )
                 DoChooseDestination();
+            else
+                DoRunProgress();
         }
-
-        
     }
 
     private static void DoChooseDestination()
@@ -59,5 +59,29 @@ public static class GameUI
         UI.Label(rect, "Your ship has been destroyed. The last remnants of humanity are lost forever.");
         UI.TextAlignment = TextAnchor.UpperLeft;
         UI.WordWrap = false;
+    }
+
+    private static void DoRunProgress()
+    {
+        const float Width = 300;
+        const float Height = 40;
+
+        var rect = new Rect(
+            Screen.width/2f - Width/2f, 
+            UI.Gap, 
+            Width, Height);
+        
+        UI.ProgressBar(rect, Run.RunPercentComplete);
+        
+        Texture2D ship = ResourceCache.Texture("Textures/ship-icon");
+        
+        float width = Height * (ship.width / ship.height);
+        Rect shipRect = new Rect(
+            rect.x + rect.width * Run.RunPercentComplete - (width/2f), 
+            UI.Gap, 
+            width, 
+            Height);
+        
+        UI.DrawTexture(shipRect, ship, tint: Color.gray);
     }
 }

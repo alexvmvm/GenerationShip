@@ -381,6 +381,22 @@ public static class UI
         GUI.Label(new Rect(r.xMin + Theme.Padding, r.yMin + Theme.Padding, r.width - Theme.Padding * 2f, r.height - Theme.Padding * 2f), text, richLabel);
     }
 
+    public static void DrawTexture(Rect r, Texture texture, ScaleMode scaleMode = ScaleMode.ScaleToFit, Color? tint = null)
+    {
+        if (texture == null)
+            return;
+
+        EnsureStyles();
+
+        var prev = GUI.color;
+        if( tint.HasValue )
+            GUI.color = tint.Value;
+
+        GUI.DrawTexture(r, texture, scaleMode);
+
+        GUI.color = prev;
+    }
+
     // ---------------------------
     // Convenience: Begin/End area
     // ---------------------------

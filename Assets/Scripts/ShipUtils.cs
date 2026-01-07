@@ -227,4 +227,23 @@ public static class ShipUtils
         EntityType.SHIP_ROOM_ENGINE => EntityTag.Room | EntityTag.Engine,
         _ => throw new NotImplementedException("Unknown room type " + type) 
     };
+
+    public static bool ShipDestroyed(int shipId, in List<Entity> entities)
+    {
+        bool anyRooms = false;
+
+        for(int i = 0; i < entities.Count; i++)
+        {            
+            if( entities[i].parentId == shipId 
+                && entities[i].tags.HasFlag(EntityTag.Room) 
+                && !entities[i].cleanup 
+                && !entities[i].cleanupIfNotVisible )
+            {
+                anyRooms = true;
+                break;
+            }
+        }
+
+        return !anyRooms;
+    }
 }

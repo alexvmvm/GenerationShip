@@ -39,14 +39,16 @@ public readonly struct Context
     public readonly List<Entity> entities;
     public readonly Rect worldScreenRect;
     public readonly bool isMoving;
+    public readonly bool isDestroyed;
     public readonly int targetNodeId;
 
-    public Context(List<Entity> entities, Rect worldScreenRect, bool isMoving = false, int targetNodeId = -1)
+    public Context(List<Entity> entities, Rect worldScreenRect, bool isMoving = false, int targetNodeId = -1, bool isDestroyed = false)
     {
         this.entities = entities;
         this.worldScreenRect = worldScreenRect;
         this.isMoving = isMoving;
         this.targetNodeId = targetNodeId;
+        this.isDestroyed = isDestroyed;
     }
 }
 
@@ -69,7 +71,8 @@ public class Game : MonoBehaviour
     public static int TicksGame => ticksGame;
     private Context Context => new(entities, Camera.main.GetWorldRect(), 
         Run.targetNodeId >= 0, 
-        Run.targetNodeId);
+        Run.targetNodeId,
+        ShipUtils.ShipDestroyed(shipId, in entities));
     public GameMode Mode => gameMode;
     public bool DrawEntities => Mode != GameMode.Map;
     public int Seed => seed;

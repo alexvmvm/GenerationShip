@@ -17,33 +17,47 @@ public static class GameUI
         //     }
         // }
 
-        if( !context.isMoving && Find.Game.Mode == GameMode.Playing )
+        if( Find.Game.Mode == GameMode.Playing )
         {
-            const float Width = 300;
-            const float Height = 150;
+            if( context.isDestroyed )
+                DoGameOver();
+            else if( !context.isMoving )
+                DoChooseDestination();
+        }
 
-            var rect = new Rect(
-                Screen.width/2f - Width/2f, 
-                Screen.height - Height - UI.Gap, 
-                Width, Height);
-            
-            if( UI.Button(rect, "Choose destination") )
-            {
-                Find.Game.SetMode(GameMode.Map);
-            }
+        
+    }
+
+    private static void DoChooseDestination()
+    {
+        const float Width = 300;
+        const float Height = 150;
+
+        var rect = new Rect(
+            Screen.width/2f - Width/2f, 
+            Screen.height - Height - UI.Gap, 
+            Width, Height);
+        
+        if( UI.Button(rect, "Choose destination") )
+        {
+            Find.Game.SetMode(GameMode.Map);
         }
     }
 
-    // private static void DrawRoomUI(in Entity room)
-    // {
-    //     Vector2 screenPos = room.position.WorldToGUI();
-    //     Rect rect = new Rect(screenPos.x, screenPos.y, 100, 20);
-    //     float percentHit = room.hitPoints / (float)DamageTuning.RoomHitpoints;
+    private static void DoGameOver()
+    {
+        const float Width = 200;
+        const float Height = 200;
+
+        var rect = new Rect(
+            Screen.width/2f - Width/2f, 
+            Screen.height/2f - Height/2f, 
+            Width, Height);
         
-    //     UI.ProgressBar(rect, percentHit, 
-    //         backgroundColor: Color.white, 
-    //         fillColor: Color.red,
-    //         outlineColor: Color.white,
-    //         labelText: $"{room.hitPoints}/{DamageTuning.RoomHitpoints}");
-    // }
+        UI.WordWrap = true;
+        UI.TextAlignment = TextAnchor.MiddleCenter;
+        UI.Label(rect, "Your ship has been destroyed. The last remnants of humanity are lost forever.");
+        UI.TextAlignment = TextAnchor.UpperLeft;
+        UI.WordWrap = false;
+    }
 }

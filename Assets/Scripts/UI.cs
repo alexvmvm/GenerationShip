@@ -47,9 +47,37 @@ public static class UI
 
     private static Texture2D whiteTex;
 
+    private static bool wordWrap = false;
+    public static bool WordWrap
+    {
+        get => wordWrap;
+        set
+        {
+            if (wordWrap == value) 
+                return;
+            
+            wordWrap = value;
+            stylesInit = false; // auto-rebuild styles next draw
+        }
+    }
+
+    private static TextAnchor textAlignment = TextAnchor.UpperLeft;
+    public static TextAnchor TextAlignment
+    {
+        get => textAlignment;
+        set
+        {
+            if (textAlignment == value) return;
+            textAlignment = value;
+            stylesInit = false;
+        }
+    }
+
     private static void EnsureStyles()
     {
-        if (stylesInit) return;
+        if (stylesInit) 
+            return;
+        
         stylesInit = true;
 
         whiteTex = Texture2D.whiteTexture;
@@ -58,14 +86,20 @@ public static class UI
         {
             fontSize = Theme.FontSize,
             richText = false,
-            wordWrap = false,
+            wordWrap = WordWrap,
+            alignment = TextAlignment
         };
         label.normal.textColor = Theme.TextColor;
 
         subtleLabel = new GUIStyle(label);
         subtleLabel.normal.textColor = Theme.SubtleTextColor;
 
-        richLabel = new GUIStyle(label) { richText = true, wordWrap = true };
+        richLabel = new GUIStyle(label) 
+        { 
+            richText = true,
+            wordWrap = WordWrap,
+            alignment = TextAlignment
+        };
 
         headerLabel = new GUIStyle(label)
         {
@@ -95,6 +129,8 @@ public static class UI
             fontSize = Theme.FontSize
         };
     }
+
+    public static void InvalidateStyles() => stylesInit = false;
 
     // ---------------------------
     // Layout helper (simple vertical stack)

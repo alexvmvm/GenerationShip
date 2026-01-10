@@ -93,22 +93,6 @@ public static class ShipEditor
         }
 
         mousePos = pos;
-
-        if( canPlace && Input.GetKeyDown(KeyCode.Mouse0) )
-        {
-            for(int i = startIndex; i < context.entities.Count; i++)
-            {
-                Entity e = context.entities[i];
-                e.drawColorOverride = null;
-                e.isBeingPlaced = false;
-                e.sortingOrder -= SortingOrder.BlueprintOffset;
-                context.entities[i] = e;
-            }
-
-            startIndex = -1;
-
-            Find.Game.SetMode(GameMode.Playing);
-        }
     }
 
     public static void OnGUI(in Context context)
@@ -118,9 +102,11 @@ public static class ShipEditor
             selectedEntityType = null;
             category = null;
             ClearBuildEntities(context);
-            
             return;
         }
+
+        bool mouseOverEditorUI = false;
+        Vector2 mousePosGUI = Event.current.mousePosition;
 
         var buildablesByCategory = buildables.GroupBy(e => e.category);
 
@@ -133,6 +119,9 @@ public static class ShipEditor
         {
             Rect rect = new Rect(UI.Gap, y, CatBtnWidth, CatBtnHeight);
 
+            if( rect.Contains(mousePosGUI) )
+                mouseOverEditorUI = true;
+
             if( UI.Button(rect, cat.Key.ToStringHuman()))
             {
                 category = cat.Key;
@@ -142,10 +131,26 @@ public static class ShipEditor
         }   
 
         if( category is BuildCategory selectedCategory )
-            DoBuildableCategory(UI.Gap + CatBtnWidth, selectedCategory, context);        
+            mouseOverEditorUI |= DoBuildableCategory(UI.Gap + CatBtnWidth, selectedCategory, context);
+
+        if( Event.current.type == EventType.MouseDown 
+            && Event.current.button == 0 
+            && !mouseOverEditorUI )
+        {
+            TryPlace(context);
+            Event.current.Use();
+        }
+
+        if( Event.current.type == EventType.MouseDown 
+            && Event.current.button == 1 )
+        {
+            selectedEntityType = null;
+            ClearBuildEntities(context);
+            Event.current.Use();
+        }
     }
 
-    private static void DoBuildableCategory(float x, BuildCategory category, Context context)
+    private static bool DoBuildableCategory(float x, BuildCategory category, Context context)
     {
         const float CatBtnWidth = 200;
         const float CatBtnHeight = 60;
@@ -153,20 +158,25 @@ public static class ShipEditor
         var selectedBuildables = buildables.Where(b => b.category == category);
 
         float y = Screen.height/2f - selectedBuildables.Count() * CatBtnHeight/2f;
+        bool mouseOverEditorUI = false;
 
         foreach(Buildable buildable in selectedBuildables)
         {
             Rect rect = new Rect(x, y, CatBtnWidth, CatBtnHeight);
 
+            if( rect.Contains(Event.current.mousePosition) )
+                mouseOverEditorUI = true;
+
             if( UI.Button(rect, buildable.entityType.ToString()))
                 SetEntityType(buildable.entityType, context);
         }
+
+        return mouseOverEditorUI;
     }
 
     private static void SetEntityType(EntityType entityType, Context context)
     {
-        if( selectedEntityType != null )
-            ClearBuildEntities(context);
+        ClearBuildEntities(context);
 
         selectedEntityType = entityType;
 
@@ -215,6 +225,28 @@ public static class ShipEditor
         }
 
         return true;
+    }
+
+    private static void TryPlace(Context context)
+    {
+        if( selectedEntityType is not EntityType )
+            return;
+
+        if( !CanPlace(context) )
+            return;
+
+        for(int i = startIndex; i < context.entities.Count; i++)
+        {
+            Entity e = context.entities[i];
+            e.drawColorOverride = null;
+            e.isBeingPlaced = false;
+            e.sortingOrder -= SortingOrder.BlueprintOffset;
+            context.entities[i] = e;
+        }
+
+        startIndex = -1;
+
+        SetEntityType(selectedEntityType.Value, context);
     }
 
     private static bool CanOverlap(Entity entity, Entity existing)

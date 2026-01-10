@@ -7,6 +7,7 @@ public static class ShipEditor
 {
     private static Vector2 mousePos;
     private static int startIndex = -1;
+    private static EntityType entityType = EntityType.None;
 
     public static void DoShipEditor(int shipId, EntityType entityType, Context gameContext)
     {
@@ -43,8 +44,10 @@ public static class ShipEditor
         GridRenderer.LineWidth = 0.03f;
         GridRenderer.Origin = Vector2.zero;
         GridRenderer.Z = 5f; // tweak if it draws on top/behind incorrectly
-
         GridRenderer.Draw(Camera.main);
+
+        if( entityType == EntityType.None )
+            return;
 
         Vector2 pos = GetEntityRoot();
         
@@ -79,6 +82,14 @@ public static class ShipEditor
 
             Find.Game.SetMode(GameMode.Playing);
         }
+    }
+
+    public static void OnGUI(in Context context)
+    {
+        if( Find.Game.Mode != GameMode.ShipEditor )
+            return;
+
+        
     }
 
     public static bool CanPlace(Context context)

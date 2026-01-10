@@ -6,41 +6,48 @@ public static class GameUI
 {
     public static void OnGUI(Context context)
     {
-        // Update positions
-        // for(int i = 0; i < context.entities.Count; i++)
-        // {
-        //     switch(context.entities[i].entityType)
-        //     {
-        //         case EntityType.SHIP_ROOM:
-        //             DrawRoomUI(context.entities[i]);
-        //         break;
-        //     }
-        // }
-
         if( Find.Game.Mode == GameMode.Playing )
         {
             if( context.isDestroyed )
                 DoGameOver();
             else if( !context.isMoving )
-                DoChooseDestination();
+            {
+                const float Width = 600;
+                const float Height = 150;
+
+                var rect = new Rect(
+                    Screen.width/2f - Width/2f, 
+                    Screen.height - Height - UI.Gap, 
+                    Width, Height);
+
+                rect.SplitHorizontallyPercent(out Rect left, out Rect right);
+                    
+                DoChooseDestination(right);
+                DoUpgradeShip(left);
+            }
             else
                 DoRunProgress();
         }
+        else if( Find.Game.Mode is GameMode.Map or GameMode.ShipEditor )
+        {
+            if( Input.GetKeyDown(KeyCode.Escape) )
+                Find.Game.RevertToPreviousGameMode();
+        }
     }
 
-    private static void DoChooseDestination()
+    private static void DoChooseDestination(Rect rect)
     {
-        const float Width = 300;
-        const float Height = 150;
-
-        var rect = new Rect(
-            Screen.width/2f - Width/2f, 
-            Screen.height - Height - UI.Gap, 
-            Width, Height);
-        
         if( UI.Button(rect, "Choose destination") )
         {
             Find.Game.SetMode(GameMode.Map);
+        }
+    }
+
+    private static void DoUpgradeShip(Rect rect)
+    {
+        if( UI.Button(rect, "Upgrade ship") )
+        {
+            Find.Game.SetMode(GameMode.ShipEditor);
         }
     }
 

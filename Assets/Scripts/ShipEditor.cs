@@ -130,6 +130,24 @@ public static class ShipEditor
             y += rect.height;
         }   
 
+        // exit btn
+        {
+            const float CloseBtnWidth = 150;
+            const float CloseBtnHeight = 75;
+
+            var closeRect = new Rect(
+                Screen.width/2f - CloseBtnWidth/2f, 
+                Screen.height - CloseBtnHeight,
+                CloseBtnWidth,
+                CloseBtnHeight);
+
+            if( closeRect.Contains(mousePosGUI) )
+                mouseOverEditorUI = true;
+
+            if( UI.Button(closeRect, "Exit") )
+                Find.Game.SetMode(GameMode.Playing);
+        }
+
         if( category is BuildCategory selectedCategory )
             mouseOverEditorUI |= DoBuildableCategory(UI.Gap + CatBtnWidth, selectedCategory, context);
 
@@ -207,6 +225,7 @@ public static class ShipEditor
 
     public static bool CanPlace(Context context)
     {
+        // check if we're going to overlap anything
         for(int i = startIndex; i < context.entities.Count; i++)
         {
             Entity e = context.entities[i];

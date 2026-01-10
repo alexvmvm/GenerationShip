@@ -31,7 +31,7 @@ public static class GameUI
         else if( Find.Game.Mode is GameMode.Map or GameMode.ShipEditor )
         {
             if( Input.GetKeyDown(KeyCode.Escape) )
-                Find.Game.RevertToPreviousGameMode();
+                Find.Game.SetMode(GameMode.Playing);
         }
     }
 

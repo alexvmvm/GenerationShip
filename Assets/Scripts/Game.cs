@@ -65,7 +65,6 @@ public class Game : MonoBehaviour
     private static int ticksGame;
     private int shipId;
     private GameMode gameMode = GameMode.Playing;
-    private GameMode prevGameMode;
     private int seed;
 
     //Props
@@ -197,14 +196,6 @@ public class Game : MonoBehaviour
     public void SetMode(GameMode mode)
     {
         if( this.gameMode != mode )
-        {
-            this.prevGameMode = gameMode;
             this.gameMode = mode;
-        }
-    }
-
-    public void RevertToPreviousGameMode()
-    {
-        SetMode(prevGameMode);
     }
 }

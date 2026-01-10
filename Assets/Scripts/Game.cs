@@ -69,6 +69,7 @@ public class Game : MonoBehaviour
     private int seed;
 
     //Props
+    public int ShipId => shipId;
     public static int TicksGame => ticksGame;
     private Context Context => new(entities, Camera.main.GetWorldRect(), 
         Run.targetNodeId >= 0, 
@@ -128,21 +129,9 @@ public class Game : MonoBehaviour
 
         Context context = Context;
 
-        GameUI.OnGUI(context);
         Shields.OnGUI(in context);
         ShipEditor.OnGUI(in context);
-
-        const int BtnWidth = 120;
-        const int BtnHeight = 40;
-
-        if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - BtnHeight - 10, BtnWidth, BtnHeight), "Add shield") )
-            ShipEditor.DoShipEditor(shipId, EntityType.SHIP_ROOM_SHIELD, context);
-
-        if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 2 * BtnHeight - 20, BtnWidth, BtnHeight), "Add turret") )
-            ShipEditor.DoShipEditor(shipId, EntityType.SHIP_ROOM_TURRET, context);
-
-        if( UI.Button(new Rect(Screen.width - BtnWidth - 10, Screen.height - 3 * BtnHeight - 30, BtnWidth, BtnHeight), "Map") )
-            Find.Game.SetMode(Find.Game.Mode == GameMode.Map ? GameMode.Playing : GameMode.Map);
+        GameUI.OnGUI(context);
     }
 
     void Tick()

@@ -4,8 +4,6 @@ using UnityEngine;
 
 public enum EntityType
 {
-    None,
-    
     // misc
     SHIP,
     PROJECTILE,

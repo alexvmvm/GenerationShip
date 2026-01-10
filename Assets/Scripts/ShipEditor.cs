@@ -1,29 +1,55 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
+
+public enum BuildCategory
+{
+    WEAPON,
+    DEFENCE
+}
+
+public struct Buildable
+{
+    public BuildCategory category;
+    public EntityType entityType;
+}
+
+public static class BuildableUtils
+{
+    public static string ToStringHuman(this BuildCategory buildable) => buildable switch
+    {
+        BuildCategory.DEFENCE => "Defence",
+        BuildCategory.WEAPON  => "Weapon",
+        _                     => throw new NotImplementedException()
+    };
+}
 
 public static class ShipEditor
 {
     private static Vector2 mousePos;
     private static int startIndex = -1;
-    private static EntityType entityType = EntityType.None;
+    private static EntityType? selectedEntityType;
+    private static BuildCategory? category;
 
-    public static void DoShipEditor(int shipId, EntityType entityType, Context gameContext)
+    private static List<Buildable> buildables = new();
+
+    static ShipEditor()
     {
-        Find.Game.SetMode(GameMode.ShipEditor);
-
-        startIndex = gameContext.entities.Count;
-        mousePos = GetEntityRoot();
-
-        foreach(Entity e in ShipUtils.CreateShipRoom(shipId, entityType, mousePos))
+        buildables.Clear();
+        buildables.Add(new Buildable
         {
-            Entity entity = e;
-            entity.isBeingPlaced = true;
-            entity.sortingOrder += SortingOrder.BlueprintOffset;
-            gameContext.entities.Add(entity);
-        }
-    }   
+            category   = BuildCategory.WEAPON,
+            entityType = EntityType.SHIP_ROOM_TURRET
+        });
+        buildables.Add(new Buildable
+        {
+            category   = BuildCategory.DEFENCE,
+            entityType = EntityType.SHIP_ROOM_SHIELD
+        });
+    }
 
     private static Vector2 GetEntityRoot()
     {
@@ -46,12 +72,11 @@ public static class ShipEditor
         GridRenderer.Z = 5f; // tweak if it draws on top/behind incorrectly
         GridRenderer.Draw(Camera.main);
 
-        if( entityType == EntityType.None )
+        if( selectedEntityType is not EntityType )
             return;
 
         Vector2 pos = GetEntityRoot();
         
-
         bool canPlace = CanPlace(context);
 
         Vector2 offset = pos - mousePos;
@@ -80,6 +105,8 @@ public static class ShipEditor
                 context.entities[i] = e;
             }
 
+            startIndex = -1;
+
             Find.Game.SetMode(GameMode.Playing);
         }
     }
@@ -87,9 +114,85 @@ public static class ShipEditor
     public static void OnGUI(in Context context)
     {
         if( Find.Game.Mode != GameMode.ShipEditor )
+        {
+            selectedEntityType = null;
+            category = null;
+            ClearBuildEntities(context);
+            
             return;
+        }
 
+        var buildablesByCategory = buildables.GroupBy(e => e.category);
+
+        const float CatBtnWidth = 200;
+        const float CatBtnHeight = 60;
+
+        float y = Screen.height/2f - buildablesByCategory.Count() * CatBtnHeight/2f;
+
+        foreach(var cat in buildablesByCategory)
+        {
+            Rect rect = new Rect(UI.Gap, y, CatBtnWidth, CatBtnHeight);
+
+            if( UI.Button(rect, cat.Key.ToStringHuman()))
+            {
+                category = cat.Key;
+            }
+
+            y += rect.height;
+        }   
+
+        if( category is BuildCategory selectedCategory )
+            DoBuildableCategory(UI.Gap + CatBtnWidth, selectedCategory, context);        
+    }
+
+    private static void DoBuildableCategory(float x, BuildCategory category, Context context)
+    {
+        const float CatBtnWidth = 200;
+        const float CatBtnHeight = 60;
+
+        var selectedBuildables = buildables.Where(b => b.category == category);
+
+        float y = Screen.height/2f - selectedBuildables.Count() * CatBtnHeight/2f;
+
+        foreach(Buildable buildable in selectedBuildables)
+        {
+            Rect rect = new Rect(x, y, CatBtnWidth, CatBtnHeight);
+
+            if( UI.Button(rect, buildable.entityType.ToString()))
+                SetEntityType(buildable.entityType, context);
+        }
+    }
+
+    private static void SetEntityType(EntityType entityType, Context context)
+    {
+        if( selectedEntityType != null )
+            ClearBuildEntities(context);
+
+        selectedEntityType = entityType;
+
+        startIndex = context.entities.Count;
+        mousePos = GetEntityRoot();
+
+        foreach(Entity e in ShipUtils.CreateShipRoom(Find.Game.ShipId, entityType, mousePos))
+        {
+            Entity entity = e;
+            entity.isBeingPlaced = true;
+            entity.sortingOrder += SortingOrder.BlueprintOffset;
+            context.entities.Add(entity);
+        }
+    }
+
+    private static void ClearBuildEntities(Context context)
+    {
+        if( startIndex < 0 )
+            return;
         
+        for(int i = context.entities.Count - 1; i >= startIndex; i--)
+        {
+            context.entities.RemoveAt(i);
+        }
+
+        startIndex = -1;
     }
 
     public static bool CanPlace(Context context)

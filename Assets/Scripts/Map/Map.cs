@@ -355,7 +355,7 @@ public static class Map
 
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
-                    Run.Init(node.id, 5);
+                    Run.Init(node.id, Game.TicksPerRealSecond);
                     Find.Game.SetMode(GameMode.Playing);
                 }
             }

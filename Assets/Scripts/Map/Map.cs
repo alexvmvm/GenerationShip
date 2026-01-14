@@ -38,6 +38,16 @@ public static class Map
     private static readonly List<int> availableNodes = new();
     private static readonly Dictionary<int, int> nodeIndexById = new();
 
+    // Props
+    public static List<int> AvailableNodes
+    {
+        get
+        {
+            CalculateAvailableNodes();
+            return availableNodes;
+        }
+    }
+
     public static void CreateMap()
     {
         nodes.Clear();
@@ -345,7 +355,7 @@ public static class Map
 
                 if (Input.GetKeyDown(KeyCode.Mouse0))
                 {
-                    Run.Init(node.id, Game.TicksPerRealSecond * 10);
+                    Run.Init(node.id, 5);
                     Find.Game.SetMode(GameMode.Playing);
                 }
             }

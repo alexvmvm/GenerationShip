@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class GameUI
 {
@@ -8,7 +9,9 @@ public static class GameUI
     {
         if( Find.Game.Mode == GameMode.Playing )
         {
-            if( context.isDestroyed )
+            if( context.isSuccess )
+                DoSuccess();
+            else if( context.isDestroyed )
                 DoGameOver();
             else if( !context.isMoving )
             {
@@ -66,6 +69,40 @@ public static class GameUI
         UI.Label(rect, "Your ship has been destroyed. The last remnants of humanity are lost forever.");
         UI.TextAlignment = TextAnchor.UpperLeft;
         UI.WordWrap = false;
+    }
+
+    private static void DoSuccess()
+    {
+        // text
+        {
+            const float Width = 200;
+            const float Height = 200;
+
+            var rect = new Rect(
+                Screen.width/2f - Width/2f, 
+                Screen.height/2f - Height/2f, 
+                Width, Height);
+            
+            UI.WordWrap = true;
+            UI.TextAlignment = TextAnchor.MiddleCenter;
+            UI.Label(rect, "Your ship has reached the edge of the solar system.\nBeyond lies the vast intergalactic void—and with it, a fragile hope for humanity.");
+            UI.TextAlignment = TextAnchor.UpperLeft;
+            UI.WordWrap = false;
+        }
+
+        // reset
+        {
+            const float Width = 300;
+            const float Height = 150;
+
+            var rect = new Rect(
+                Screen.width/2f - Width/2f, 
+                Screen.height - Height - UI.Gap, 
+                Width, Height);
+
+            if( UI.Button(rect, "Restart") )
+                Find.Game.Reset();
+        }
     }
 
     private static void DoRunProgress()

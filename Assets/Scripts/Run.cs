@@ -31,6 +31,15 @@ public static class Run
         return visitedNodeIds.Contains(id);
     }
 
+    public static void Reset()
+    {
+        visitedNodeIds.Clear();
+        lastNodeId = -1;
+        runDurationTicks = -1;
+        runTicks = 0;
+        targetNodeId = -1;
+    }
+
     public static void Tick(Context context)
     {
         if( context.targetNodeId < 0 || runTicks >= runDurationTicks )

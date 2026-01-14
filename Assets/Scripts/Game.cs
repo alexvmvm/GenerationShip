@@ -40,15 +40,17 @@ public readonly struct Context
     public readonly Rect worldScreenRect;
     public readonly bool isMoving;
     public readonly bool isDestroyed;
+    public readonly bool isSuccess;
     public readonly int targetNodeId;
 
-    public Context(List<Entity> entities, Rect worldScreenRect, bool isMoving = false, int targetNodeId = -1, bool isDestroyed = false)
+    public Context(List<Entity> entities, Rect worldScreenRect, bool isMoving = false, int targetNodeId = -1, bool isDestroyed = false, bool isSuccess = false)
     {
         this.entities = entities;
         this.worldScreenRect = worldScreenRect;
         this.isMoving = isMoving;
         this.targetNodeId = targetNodeId;
         this.isDestroyed = isDestroyed;
+        this.isSuccess = isSuccess;
     }
 }
 
@@ -73,7 +75,8 @@ public class Game : MonoBehaviour
     private Context Context => new(entities, Camera.main.GetWorldRect(), 
         Run.targetNodeId >= 0, 
         Run.targetNodeId,
-        ShipUtils.ShipDestroyed(shipId, in entities));
+        ShipUtils.ShipDestroyed(shipId, in entities),
+        Map.AvailableNodes.NullOrEmpty());
     public GameMode Mode => gameMode;
     public bool DrawEntities => Mode != GameMode.Map;
     public int Seed => seed;
@@ -85,6 +88,11 @@ public class Game : MonoBehaviour
     }
 
     void Start()
+    {
+        CreateShip();
+    }
+
+    void CreateShip()
     {
         Entity ship = EntityMaker.MakeShip(6, 10, Context);
         shipId = ship.id;
@@ -148,6 +156,13 @@ public class Game : MonoBehaviour
         Shields.Tick(context);
         Turrets.Tick(context);
         Run.Tick(context);
+    }
+
+    public void Reset()
+    {
+        Run.Reset();
+        entities.Clear();
+        CreateShip();
     }
 
     void GatherInput()

@@ -158,7 +158,8 @@ public static class ShipUtils
                     position = rect.center,
                     sortingOrder = SortingOrder.ShipBuilding,
                     parentId = roomId,
-                    tags = EntityTag.Engine
+                    tags = EntityTag.Engine,
+                    isResourceAttractor = true
                 });
 
             break;

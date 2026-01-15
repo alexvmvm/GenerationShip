@@ -26,7 +26,8 @@ public static class EntityMaker
             entityType = large ? EntityType.ASTEROID_FRAGMENT_LARGE : EntityType.ASTEROID_FRAGMENT_SMALL,
             drawSize = Vector2.one,
             cleanupIfNotVisible = true,
-            sortingOrder = SortingOrder.AsteroidFragment
+            sortingOrder = SortingOrder.AsteroidFragment,
+            resourceCount = 1
         };
     }
 

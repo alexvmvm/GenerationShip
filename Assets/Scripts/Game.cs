@@ -99,14 +99,20 @@ public class Game : MonoBehaviour
         Map.CreateMap();
     }
 
-    public bool CanSpend(int amount)
+    public bool CanSpendResource(int amount)
     {
         return resources <= amount;
     }
 
-    public void Spend(int amount)
+    public void SpendResource(int amount)
     {
         this.resources = Math.Max(resources - amount, 0);
+    }
+
+    public void GainResource(int amount)
+    {
+        this.resources += amount;
+        this.resources = Math.Max(0, this.resources);
     }
 
     void Update()
@@ -132,6 +138,7 @@ public class Game : MonoBehaviour
         Collisions.Update(context);
         ShipEditor.Update(context);
         EntityRenderer.Update(context);
+        Movement.Update(context);
         Map.Update(context);
     }
 
@@ -158,6 +165,7 @@ public class Game : MonoBehaviour
         var context = Context;
         
         Damage.Tick(context);
+        Attractors.Tick(context);
         Movement.Tick(context);
         Collisions.Tick(context);
         Asteroids.Tick(context);

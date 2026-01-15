@@ -97,6 +97,10 @@ public struct Entity
     public Rect roomBounds;
     public bool isBeingPlaced;
 
+    // attractors
+    public bool isResourceAttractor;
+    public int resourceCount;
+
     // shield
     public float shieldRadius;    
     public int shieldChargeTicks;

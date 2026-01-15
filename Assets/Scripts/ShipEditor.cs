@@ -296,7 +296,7 @@ public static class ShipEditor
 
         startIndex = -1;
 
-        Find.Game.Spend(buildable.cost);
+        Find.Game.SpendResource(buildable.cost);
 
         SetBuildable(buildable, context);
     }

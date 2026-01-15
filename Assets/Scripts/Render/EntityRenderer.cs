@@ -68,6 +68,7 @@ public static class EntityRenderer
         EntityType.SHIP_WALL                => ResourceCache.Sprite("Textures/wall"),
         EntityType.SHIP_ENGINE              => ResourceCache.Sprite("Textures/engine"),
         EntityType.SHIP_SHIELD              => ResourceCache.Sprite("Textures/shield-building"),
+        EntityType.SHIP_RESOURCE_COLLECTOR  => ResourceCache.Sprite("Textures/shield-building"),
         EntityType.BACKDROP_PARTICLE        => ResourceCache.Sprite("Textures/particle"),
         EntityType.ASTEROID_SMALL           => ResourceCache.Sprite("Textures/asteroid-small"),
         EntityType.ASTEROID_LARGE           => ResourceCache.Sprite("Textures/asteroid-large"),

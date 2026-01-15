@@ -5,12 +5,20 @@ using UnityEngine;
 /// Tiny immediate-mode UI helpers for Unity OnGUI.
 /// Intended for debug/dev UI: quick panels, labels, buttons, bars, simple windows.
 /// </summary>
+public enum TextSize
+{
+    Small,
+    Medium,
+    Large
+}
+
 public static class UI
 {
     // ---------------------------
     // Const
     // ---------------------------
     public const int Gap = 2;
+    public const int Gap2x = Gap * 2;
 
     // ---------------------------
     // Config
@@ -73,6 +81,33 @@ public static class UI
         }
     }
 
+    private static TextSize textSize = TextSize.Small;
+    public static TextSize TextSize
+    {
+        get => textSize;
+        set
+        {
+            if (textSize == value) 
+                return;
+            
+            textSize = value;
+            stylesInit = false;
+        }
+    }
+
+    private static int ResolveFontSize()
+    {
+        switch (textSize)
+        {
+            case TextSize.Medium:
+                return Theme.FontSize + 3;
+            case TextSize.Large:
+                return Theme.FontSize + 7;
+            default:
+                return Theme.FontSize;
+        }
+    }
+
     private static void EnsureStyles()
     {
         if (stylesInit) 
@@ -82,9 +117,11 @@ public static class UI
 
         whiteTex = Texture2D.whiteTexture;
 
+        int fontSize = ResolveFontSize();
+
         label = new GUIStyle(GUI.skin.label)
         {
-            fontSize = Theme.FontSize,
+            fontSize = fontSize,
             richText = false,
             wordWrap = WordWrap,
             alignment = TextAlignment
@@ -103,30 +140,30 @@ public static class UI
 
         headerLabel = new GUIStyle(label)
         {
-            fontSize = Theme.FontSize + 2,
+            fontSize = fontSize + 2,
             fontStyle = FontStyle.Bold
         };
 
         box = new GUIStyle(GUI.skin.box)
         {
-            fontSize = Theme.FontSize,
+            fontSize = fontSize,
             alignment = TextAnchor.UpperLeft,
             padding = new RectOffset((int)Theme.Padding, (int)Theme.Padding, (int)Theme.Padding, (int)Theme.Padding)
         };
 
         button = new GUIStyle(GUI.skin.button)
         {
-            fontSize = Theme.FontSize
+            fontSize = fontSize
         };
 
         textField = new GUIStyle(GUI.skin.textField)
         {
-            fontSize = Theme.FontSize
+            fontSize = fontSize
         };
 
         toggle = new GUIStyle(GUI.skin.toggle)
         {
-            fontSize = Theme.FontSize
+            fontSize = fontSize
         };
     }
 

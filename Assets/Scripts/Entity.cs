@@ -22,6 +22,7 @@ public enum EntityType
     // ship buildings
     SHIP_ENGINE,
     SHIP_SHIELD,
+    SHIP_RESOURCE_COLLECTOR,
     SHIELD,
     SHIP_TURRET,
     SHIP_TURRET_TOP,

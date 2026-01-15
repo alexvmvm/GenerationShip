@@ -151,6 +151,16 @@ public static class ShipUtils
                     tags = EntityTag.Engine
                 });
 
+                entities.Add(new Entity()
+                {
+                    entityType = EntityType.SHIP_RESOURCE_COLLECTOR,
+                    drawSize = Vector2.one,
+                    position = rect.center,
+                    sortingOrder = SortingOrder.ShipBuilding,
+                    parentId = roomId,
+                    tags = EntityTag.Engine
+                });
+
             break;
             case EntityType.SHIP_ROOM_TURRET:
 

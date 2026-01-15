@@ -1,10 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 [Flags]
 public enum Cardinal
@@ -68,6 +65,7 @@ public class Game : MonoBehaviour
     private int shipId;
     private GameMode gameMode = GameMode.Playing;
     private int seed;
+    private int resources = 100;
 
     //Props
     public int ShipId => shipId;
@@ -81,6 +79,7 @@ public class Game : MonoBehaviour
     public bool DrawEntities => Mode != GameMode.Map;
     public int Seed => seed;
     public bool Ticking => Mode == GameMode.Playing;
+    public int Resources => resources;
 
     void Awake()
     {
@@ -98,6 +97,16 @@ public class Game : MonoBehaviour
         shipId = ship.id;
 
         Map.CreateMap();
+    }
+
+    public bool CanSpend(int amount)
+    {
+        return resources <= amount;
+    }
+
+    public void Spend(int amount)
+    {
+        this.resources = Math.Max(resources - amount, 0);
     }
 
     void Update()
@@ -132,7 +141,7 @@ public class Game : MonoBehaviour
         sb.Clear();
         sb.AppendLine($"Entities: {entities.Count}");
 
-        GUI.Label(new Rect(10, 10, 600, 400), sb.ToString());
+        GUI.Label(new Rect(10, Screen.height - 30, 200, 30), sb.ToString());
 
         Context context = Context;
 

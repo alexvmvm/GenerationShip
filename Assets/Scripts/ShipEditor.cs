@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum BuildCategory
 {
@@ -13,6 +14,8 @@ public enum BuildCategory
 
 public struct Buildable
 {
+    public string label;
+    public int cost;
     public BuildCategory category;
     public EntityType entityType;
 }
@@ -31,7 +34,7 @@ public static class ShipEditor
 {
     private static Vector2 mousePos;
     private static int startIndex = -1;
-    private static EntityType? selectedEntityType;
+    private static Buildable? selectedBuildable;
     private static BuildCategory? category;
 
     private static List<Buildable> buildables = new();
@@ -42,12 +45,16 @@ public static class ShipEditor
         buildables.Add(new Buildable
         {
             category   = BuildCategory.WEAPON,
-            entityType = EntityType.SHIP_ROOM_TURRET
+            entityType = EntityType.SHIP_ROOM_TURRET,
+            cost = 50,
+            label = "turret"
         });
         buildables.Add(new Buildable
         {
             category   = BuildCategory.DEFENCE,
-            entityType = EntityType.SHIP_ROOM_SHIELD
+            entityType = EntityType.SHIP_ROOM_SHIELD,
+            cost = 40,
+            label = "shield"
         });
     }
 
@@ -72,7 +79,7 @@ public static class ShipEditor
         GridRenderer.Z = 5f; // tweak if it draws on top/behind incorrectly
         GridRenderer.Draw(Camera.main);
 
-        if( selectedEntityType is not EntityType )
+        if( selectedBuildable is not Buildable )
             return;
 
         Vector2 pos = GetEntityRoot();
@@ -99,7 +106,7 @@ public static class ShipEditor
     {
         if( Find.Game.Mode != GameMode.ShipEditor )
         {
-            selectedEntityType = null;
+            selectedBuildable = null;
             category = null;
             ClearBuildEntities(context);
             return;
@@ -162,7 +169,7 @@ public static class ShipEditor
         if( Event.current.type == EventType.MouseDown 
             && Event.current.button == 1 )
         {
-            selectedEntityType = null;
+            selectedBuildable = null;
             ClearBuildEntities(context);
             Event.current.Use();
         }
@@ -172,6 +179,9 @@ public static class ShipEditor
     {
         const float CatBtnWidth = 200;
         const float CatBtnHeight = 60;
+
+        const float TipWidth = 200;
+        const float TipHeight = 60;
 
         var selectedBuildables = buildables.Where(b => b.category == category);
 
@@ -185,23 +195,38 @@ public static class ShipEditor
             if( rect.Contains(Event.current.mousePosition) )
                 mouseOverEditorUI = true;
 
-            if( UI.Button(rect, buildable.entityType.ToString()))
-                SetEntityType(buildable.entityType, context);
+            if( UI.Button(rect, buildable.label.CapitalizeFirst()))
+                SetBuildable(buildable, context);
+
+            if( UI.MouseOver(rect) )
+            {
+                Rect mouseOverRect = new Rect(x + rect.width, y, TipWidth, TipHeight);
+                UI.Box(mouseOverRect);
+
+                mouseOverRect
+                    .ContractBy(UI.Gap2x)
+                    .SplitVerticallyAmount(out Rect labelRect, out Rect bottom, 20);
+                
+                UI.Label(labelRect, buildable.label.CapitalizeFirst());
+
+                bottom.SplitVerticallyAmount(out Rect cost, out bottom, 20);
+                UI.Label(cost, "Cost: " + buildable.cost.ToString());
+            }
         }
 
         return mouseOverEditorUI;
     }
 
-    private static void SetEntityType(EntityType entityType, Context context)
+    private static void SetBuildable(Buildable buildable, Context context)
     {
         ClearBuildEntities(context);
 
-        selectedEntityType = entityType;
+        selectedBuildable = buildable;
 
         startIndex = context.entities.Count;
         mousePos = GetEntityRoot();
 
-        foreach(Entity e in ShipUtils.CreateShipRoom(Find.Game.ShipId, entityType, mousePos))
+        foreach(Entity e in ShipUtils.CreateShipRoom(Find.Game.ShipId, buildable.entityType, mousePos))
         {
             Entity entity = e;
             entity.isBeingPlaced = true;
@@ -225,6 +250,12 @@ public static class ShipEditor
 
     public static bool CanPlace(Context context)
     {
+        if( selectedBuildable is not Buildable buildable )
+            return false;
+
+        if( buildable.cost > Find.Game.Resources )
+            return false;
+
         // check if we're going to overlap anything
         for(int i = startIndex; i < context.entities.Count; i++)
         {
@@ -248,7 +279,7 @@ public static class ShipEditor
 
     private static void TryPlace(Context context)
     {
-        if( selectedEntityType is not EntityType )
+        if( selectedBuildable is not Buildable buildable )
             return;
 
         if( !CanPlace(context) )
@@ -265,7 +296,9 @@ public static class ShipEditor
 
         startIndex = -1;
 
-        SetEntityType(selectedEntityType.Value, context);
+        Find.Game.Spend(buildable.cost);
+
+        SetBuildable(buildable, context);
     }
 
     private static bool CanOverlap(Entity entity, Entity existing)

@@ -36,6 +36,9 @@ public static class GameUI
             if( Input.GetKeyDown(KeyCode.Escape) )
                 Find.Game.SetMode(GameMode.Playing);
         }
+
+        if( Find.Game.Mode is GameMode.Playing or GameMode.ShipEditor )
+            DoResources();
     }
 
     private static void DoChooseDestination(Rect rect)
@@ -127,5 +130,22 @@ public static class GameUI
             Height);
         
         UI.DrawTexture(shipRect, ship, tint: Color.gray);
+    }
+
+    private static void DoResources()
+    {
+        const float Width = 200;
+        const float Height = 200;
+
+        var rect = new Rect(
+            Screen.width - Width - UI.Gap2x, 
+            0, 
+            Width, Height);
+        
+        UI.TextSize = TextSize.Large;
+        UI.TextAlignment = TextAnchor.UpperRight;
+        UI.Label(rect, Find.Game.Resources.ToString());
+        UI.TextAlignment = TextAnchor.UpperLeft;
+        UI.TextSize = TextSize.Small;
     }
 }

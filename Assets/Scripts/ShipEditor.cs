@@ -256,6 +256,8 @@ public static class ShipEditor
         if( buildable.cost > Find.Game.Resources )
             return false;
 
+        bool cardinalToExisting = false;
+
         // check if we're going to overlap anything
         for(int i = startIndex; i < context.entities.Count; i++)
         {
@@ -263,18 +265,27 @@ public static class ShipEditor
             
             for(int j = 0; j < context.entities.Count; j++)
             {
-                if( i == j )
+                var otherEntity = context.entities[j];
+                if( otherEntity.isBeingPlaced )
                     continue;
-                
-                Entity otherEntity = context.entities[j];
 
-                if( !CanOverlap(e, otherEntity) )
+                // we only care about overlapping rooms at the moment
+                if( !otherEntity.tags.HasAny(EntityTag.Room) )
+                    continue;
+
+                Rect otherRect = new Rect(otherEntity.position - (otherEntity.size/2f), otherEntity.size);
+                Rect eRect = new Rect(e.position - (e.size/2f), e.size);
+
+                if( otherRect.Overlaps(eRect) )
                     return false;
+
+                if( otherRect.AdjacentOverlapLength(eRect) > 1f )
+                    cardinalToExisting = true;
             }
             
         }
 
-        return true;
+        return cardinalToExisting;
     }
 
     private static void TryPlace(Context context)
@@ -299,16 +310,5 @@ public static class ShipEditor
         Find.Game.SpendResource(buildable.cost);
 
         SetBuildable(buildable, context);
-    }
-
-    private static bool CanOverlap(Entity entity, Entity existing)
-    {
-        if( existing.tags.HasAny(EntityTag.Room) )
-        {
-            if( existing.roomBounds.Contains(entity.position) )
-                return false;   
-        } 
-
-        return true;
     }
 }

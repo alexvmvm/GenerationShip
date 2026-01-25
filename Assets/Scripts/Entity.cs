@@ -94,7 +94,7 @@ public struct Entity
     // misc
     public int damageFlashTicks; 
     public int hitPoints;
-    public Rect roomBounds;
+    public Vector2 size;
     public bool isBeingPlaced;
 
     // attractors

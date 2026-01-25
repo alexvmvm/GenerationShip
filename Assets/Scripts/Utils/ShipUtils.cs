@@ -6,7 +6,6 @@ using UnityEngine;
 public struct ShipData
 {
     public List<int> roomIds;   
-    public List<Rect> roomRects;
     public List<Entity> rooms;
     public Dictionary<Vector2Int, Entity> structureByPosition;
 }
@@ -17,7 +16,6 @@ public static class ShipUtils
     {
         var ship = new ShipData();
         ship.roomIds = new();
-        ship.roomRects = new();
         ship.rooms = new();
         ship.structureByPosition = new();
 
@@ -26,11 +24,8 @@ public static class ShipUtils
             if( entities[i].parentId == shipId )
             {
                 if( entities[i].tags.HasAny(EntityTag.Room) )
-                {
-                    Rect roomRect = entities[i].roomBounds;
-                    
+                {                    
                     ship.roomIds.Add(entities[i].id);
-                    ship.roomRects.Add(roomRect);
                     ship.rooms.Add(entities[i]);
                 }
             }
@@ -77,7 +72,7 @@ public static class ShipUtils
             collideWithMask = CollisionLayer.Asteroid,
             hitPoints = DamageTuning.RoomHitpoints,
             tags = RoomTags(entityType),
-            roomBounds = rect
+            size = new(width, height)
         };
 
         entities.Add(room);

@@ -160,14 +160,14 @@ public static class GameUI
         var pause = new Rect(Screen.width - Size, Screen.height - Size, Size, Size);
         if( UI.Button(pause, ResourceCache.Get<Texture2D>("Textures/pause")))
         {
-            
+            Find.Game.Pause();
         }
 
         var play = pause;
         play.x -= Size;
         if( UI.Button(play, ResourceCache.Get<Texture2D>("Textures/play")))
         {
-            
+            Find.Game.Play();
         }
     }
 }

@@ -66,6 +66,7 @@ public class Game : MonoBehaviour
     private GameMode gameMode = GameMode.Playing;
     private int seed;
     private int resources = 1000;
+    private bool paused;
 
     //Props
     public int ShipId => shipId;
@@ -78,7 +79,8 @@ public class Game : MonoBehaviour
     public GameMode Mode => gameMode;
     public bool DrawEntities => Mode != GameMode.Map;
     public int Seed => seed;
-    public bool Ticking => Mode == GameMode.Playing;
+    public bool Ticking => Mode == GameMode.Playing && !paused;
+    public bool Paused => paused;
     public int Resources => resources;
 
     void Awake()
@@ -177,6 +179,7 @@ public class Game : MonoBehaviour
 
     public void Reset()
     {
+        paused = false;
         Run.Reset();
         entities.Clear();
         CreateShip();
@@ -229,5 +232,20 @@ public class Game : MonoBehaviour
     {
         if( this.gameMode != mode )
             this.gameMode = mode;
+    }
+
+    public void Pause()
+    {
+        paused = true;
+    }
+
+    public void Play()
+    {
+        paused = false;
+    }
+
+    public void TogglePause()
+    {
+        paused = !paused;
     }
 }

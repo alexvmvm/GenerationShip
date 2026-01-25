@@ -65,7 +65,7 @@ public class Game : MonoBehaviour
     private int shipId;
     private GameMode gameMode = GameMode.Playing;
     private int seed;
-    private int resources = 100;
+    private int resources = 1000;
 
     //Props
     public int ShipId => shipId;

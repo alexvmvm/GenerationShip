@@ -42,7 +42,8 @@ public enum EntityTag : uint
     Wall        = 1 << 4,
     Engine      = 1 << 5,
     Shield      = 1 << 6,
-    Turret      = 1 << 7
+    Turret      = 1 << 7,
+    ShipCore    = 1 << 8
 }
 
 public static class EntityTagUtils
@@ -96,6 +97,7 @@ public struct Entity
     public int hitPoints;
     public Vector2 size;
     public bool isBeingPlaced;
+    public bool rootRoom;
 
     // attractors
     public bool isResourceAttractor;

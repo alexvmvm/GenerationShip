@@ -51,8 +51,8 @@ public static class EntityMaker
         context.entities.Add(ship);
 
         Rect rect = new Rect(-width/2f, -height/2f, width, height);
-
-        context.entities.AddRange(ShipUtils.CreateShipRoom(ship.id, EntityType.SHIP_ROOM_ENGINE, rect.position));
+        
+        context.entities.AddRange(ShipUtils.CreateShipRoom(ship.id, EntityType.SHIP_ROOM_ENGINE, rect.position, extraTags: EntityTag.ShipCore));
 
         return ship;
     }  

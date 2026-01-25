@@ -47,7 +47,7 @@ public static class ShipUtils
         return ship;
     }
 
-    public static List<Entity> CreateShipRoom(int shipId, EntityType entityType, Vector2 root)
+    public static List<Entity> CreateShipRoom(int shipId, EntityType entityType, Vector2 root, EntityTag extraTags = EntityTag.None)
     {
         Debug.Assert(
             entityType == EntityType.SHIP_ROOM_SHIELD || 
@@ -74,6 +74,9 @@ public static class ShipUtils
             tags = RoomTags(entityType),
             size = new(width, height)
         };
+
+        if( extraTags != EntityTag.None )
+            room.tags |= extraTags;
 
         entities.Add(room);
 

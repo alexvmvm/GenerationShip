@@ -181,6 +181,42 @@ public static class Collisions
                 
                 context.entities[i] = e;
             }
+            
+            // destroy the whole ship
+            if( room.tags.HasAny(EntityTag.ShipCore) )
+            {
+                int shipId = room.parentId;
+                var roomIds = new HashSet<int>();
+
+                for(int i = 0; i < context.entities.Count; i++)
+                {
+                    Entity e = context.entities[i];
+                    if( e.parentId == shipId && e.tags.HasAny(EntityTag.Room) )
+                        roomIds.Add(e.id);
+                }
+
+                for(int i = 0; i < context.entities.Count; i++)
+                {
+                    Entity e = context.entities[i];
+                    if( e.id != shipId && e.parentId != shipId && !roomIds.Contains(e.parentId) )
+                        continue;
+
+                    e.cleanupIfNotVisible = true;
+                    e.sortingOrder -= 10;
+
+                    if( Rand.Chance(0.1f) )
+                    {
+                        e.velocity = new Vector2(0, -0.05f).Rotate(Rand.Range(-15, 15));
+                        e.rotationRate = Rand.Bool ? 1 : 0;
+                    }
+                    else
+                    {
+                        e.velocity = new Vector2(0, -0.05f).Rotate(Rand.Range(-1, 1));
+                    }
+
+                    context.entities[i] = e;
+                }
+            }
         }
     }
 

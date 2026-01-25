@@ -41,7 +41,10 @@ public static class GameUI
         }
 
         if( Find.Game.Mode is GameMode.Playing or GameMode.ShipEditor )
+        {
             DoResources();
+            DoHealthBar(context);
+        }
     }
 
     private static void DoChooseDestination(Rect rect)
@@ -168,6 +171,102 @@ public static class GameUI
         if( UI.Button(play, ResourceCache.Get<Texture2D>("Textures/play")))
         {
             Find.Game.Play();
+        }
+    }
+
+    private static List<Entity> tmpRooms = new();
+    private static void DoHealthBar(Context context)
+    {
+        const float ScreenBufferLeft = 10f;
+        const float ScreenBufferTop = 10f;
+        const float BarGap = 3f;
+        const float Width = 600f;
+        const float Height = 30f;
+
+        int shipId = Find.Game.ShipId;
+
+        tmpRooms.Clear();
+
+        for(int i = 0; i < context.entities.Count; i++)
+        {
+            if( context.entities[i].parentId == shipId 
+                && context.entities[i].tags.HasAny(EntityTag.Room)
+                && !context.entities[i].isBeingPlaced )
+            {
+                tmpRooms.Add(context.entities[i]);
+            }
+        }
+
+        int aliveCount = 0;
+        int coreAliveCount = 0;
+        for(int i = 0; i < tmpRooms.Count; i++)
+        {
+            if( tmpRooms[i].hitPoints <= 0 )
+                continue;
+
+            aliveCount++;
+            if( tmpRooms[i].tags.HasAny(EntityTag.ShipCore) )
+                coreAliveCount++;
+        }
+
+        if( aliveCount == 0 )
+            return;
+
+        int nonCoreAliveCount = aliveCount - coreAliveCount;
+        float totalMax = DamageTuning.RoomHitpoints * aliveCount;
+        if( totalMax <= 0f )
+            return;
+
+        float gap = BarGap;
+        float totalGap = gap * (aliveCount - 1);
+        float availableWidth = Mathf.Max(0f, Width - totalGap);
+
+        var rect = new Rect(ScreenBufferLeft, ScreenBufferTop, Width, Height);
+        float cursorX = rect.xMin;
+
+        void DrawRoomBar(Entity room, bool isCore)
+        {
+            float maxHp = DamageTuning.RoomHitpoints;
+            float segmentWidth = availableWidth * (maxHp / totalMax);
+            float t = Mathf.Clamp01(room.hitPoints / maxHp);
+            Color fill = isCore
+                ? Color.Lerp(new Color(0.2f, 0.4f, 1f), new Color(0f, 0.9f, 1f), t)
+                : Color.Lerp(Color.red, Color.green, t);
+
+
+            var bar = new Rect(cursorX, rect.yMin, segmentWidth, rect.height);
+            UI.ProgressBar(
+                bar,
+                t,
+                backgroundColor: new Color(0f, 0f, 0f, 0.35f),
+                fillColor: fill);
+
+            cursorX += segmentWidth + gap;
+        }
+
+        for(int i = 0; i < tmpRooms.Count; i++)
+        {
+            Entity room = tmpRooms[i];
+            if( room.hitPoints <= 0 )
+                continue;
+            if( !room.tags.HasAny(EntityTag.ShipCore) )
+                continue;
+
+            DrawRoomBar(room, isCore: true);
+        }
+
+        if( coreAliveCount > 0 && nonCoreAliveCount > 0 )
+            cursorX -= gap;
+
+        for(int i = 0; i < tmpRooms.Count; i++)
+        {
+            Entity room = tmpRooms[i];
+            if( room.hitPoints <= 0 )
+                continue;
+            if( room.tags.HasAny(EntityTag.ShipCore) )
+                continue;
+
+            DrawRoomBar(room, isCore: false);
         }
     }
 }

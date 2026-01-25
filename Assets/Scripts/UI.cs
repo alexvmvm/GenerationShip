@@ -250,6 +250,13 @@ public static class UI
         return GUI.Button(r, text, button);
     }
 
+    public static bool Button(Rect r, Texture texture)
+    {
+        EnsureStyles();
+        var content = texture == null ? GUIContent.none : new GUIContent(texture);
+        return GUI.Button(r, content, button);
+    }
+
     public static bool Toggle(Rect r, bool value, string text)
     {
         EnsureStyles();

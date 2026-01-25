@@ -29,7 +29,10 @@ public static class GameUI
                 DoUpgradeShip(left);
             }
             else
+            {
                 DoRunProgress();
+                DoPlayPause();
+            }
         }
         else if( Find.Game.Mode is GameMode.Map or GameMode.ShipEditor )
         {
@@ -147,5 +150,24 @@ public static class GameUI
         UI.Label(rect, Find.Game.Resources.ToString());
         UI.TextAlignment = TextAnchor.UpperLeft;
         UI.TextSize = TextSize.Small;
+    }
+
+    
+    private static void DoPlayPause()
+    {
+        const float Size = 50;
+        
+        var pause = new Rect(Screen.width - Size, Screen.height - Size, Size, Size);
+        if( UI.Button(pause, ResourceCache.Get<Texture2D>("Textures/pause")))
+        {
+            
+        }
+
+        var play = pause;
+        play.x -= Size;
+        if( UI.Button(play, ResourceCache.Get<Texture2D>("Textures/play")))
+        {
+            
+        }
     }
 }
